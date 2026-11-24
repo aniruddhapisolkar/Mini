@@ -35,8 +35,80 @@ export function invertTransform(t: Transform): Transform {
   };
 }
 
+export function point(x: number, y: number): Point {
+  return { x, y };
+}
+
+export function addPoints(a: Point, b: Point): Point {
+  return { x: a.x + b.x, y: a.y + b.y };
+}
+
+export function subtractPoints(a: Point, b: Point): Point {
+  return { x: a.x - b.x, y: a.y - b.y };
+}
+
+export function scalePoint(p: Point, s: number): Point {
+  return { x: p.x * s, y: p.y * s };
+}
+
+export function size(width: number, height: number): Size {
+  return { width, height };
+}
+
+export function addSizes(a: Size, b: Size): Size {
+  return { width: a.width + b.width, height: a.height + b.height };
+}
+
+export function scaleSize(s: Size, factor: number): Size {
+  return { width: s.width * factor, height: s.height * factor };
+}
+
+export function containsSize(container: Size, content: Size): boolean {
+  return container.width >= content.width && container.height >= content.height;
+}
+
+export function rect(x: number, y: number, width: number, height: number): Rect {
+  return { x, y, width, height };
+}
+
+export function rectFromPoints(topLeft: Point, bottomRight: Point): Rect {
+  return {
+    x: topLeft.x,
+    y: topLeft.y,
+    width: bottomRight.x - topLeft.x,
+    height: bottomRight.y - topLeft.y,
+  };
+}
+
 export function rectContains(r: Rect, p: Point): boolean {
   return p.x >= r.x && p.x <= r.x + r.width && p.y >= r.y && p.y <= r.y + r.height;
+}
+
+export function rectIntersects(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+export function rectCenter(r: Rect): Point {
+  return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+}
+
+export function applyTransform(t: Transform, p: Point): Point {
+  return {
+    x: t.a * p.x + t.c * p.y + t.e,
+    y: t.b * p.x + t.d * p.y + t.f,
+  };
+}
+
+export function boundingBox(points: Point[]): Rect {
+  if (points.length === 0) return { x: 0, y: 0, width: 0, height: 0 };
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of points) {
+    minX = Math.min(minX, p.x);
+    minY = Math.min(minY, p.y);
+    maxX = Math.max(maxX, p.x);
+    maxY = Math.max(maxY, p.y);
+  }
+  return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
 export function rectUnion(a: Rect, b: Rect): Rect {

@@ -93,6 +93,9 @@ export function createScope(root: HTMLElement, variables: Record<string, string>
 }
 
 export { htmlBackend } from "./backends/html";
+export { svgBackend } from "./backends/svg";
 export type { Backend, BackendId } from "./core/types";
 export * from "./core/types";
 export * from "./core/registry";
+export * from "./core/lifecycle";
+export { CanvasTextMeasurer, TextProcessor, Typography, sanitizeHtml, createSpan, decodeHtmlEntities } from "./text/index";

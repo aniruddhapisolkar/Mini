@@ -192,3 +192,21 @@ export interface IncrementalUpdate {
   changedData?: { rows?: number[]; cols?: number[]; series?: number[] };
   strategy: "patch" | "rebuild";
 }
+
+// Span (shared token primitive)
+export interface Span {
+  text: string;
+  kind: string;
+  range: [number, number];
+  children?: Span[];
+  style?: Record<string, string>;
+  dataRef?: { row?: number; col?: number; series?: number; point?: number };
+}
+
+// TextMeasurer
+export interface TextMeasurer {
+  measure(text: string, font: FontSpec): TextMetrics;
+  measureRange(text: string, font: FontSpec, start: number, end: number): TextMetrics;
+  lineHeight(font: FontSpec): number;
+  wrap(text: string, font: FontSpec, maxWidth: number): string[];
+}
