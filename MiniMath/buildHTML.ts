@@ -176,13 +176,6 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const body = Array.isArray(node.body) ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : "";
       return body;
     }
-    case "supsub": {
-      // already handled above; fallback
-      const base = node.base ? renderNode(node.base, opts, display) : "";
-      const sup = node.sup ? `<sup>${(node.sup as Expression).map((n: any) => renderNode(n, opts, display)).join("")}</sup>` : "";
-      const sub = node.sub ? `<sub>${(node.sub as Expression).map((n: any) => renderNode(n, opts, display)).join("")}</sub>` : "";
-      return `${base}${sup}${sub}`;
-    }
     default: {
       if (node.body && Array.isArray(node.body)) {
         return (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
