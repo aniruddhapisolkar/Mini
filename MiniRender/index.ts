@@ -77,8 +77,11 @@ export function createScope(id: string, variables: Record<string, string> = {}, 
 }
 
 export { htmlBackend } from "./backends/html";
+export { svgBackend } from "./backends/svg";
+export { createRenderHandle } from "./core/lifecycle";
 export type { BackendId } from "./core/types";
 export type { Backend } from "./core/interfaces";
 export * from "./core/types";
 export * from "./core/interfaces";
 export * from "./core/registry";
+export { TextProcessor, Typography, sanitizeHtml, CanvasTextMeasurer, createSpan, decodeHtmlEntities } from "./text/index";
