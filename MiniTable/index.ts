@@ -36,6 +36,9 @@ interface TableModel extends SemanticModel {
   filter: string;
   striped: boolean;
   bordered: boolean;
+  virtualized: boolean;
+  rowHeight: number;
+  viewportHeight: number;
 }
 
 // ---- Helpers ----
@@ -71,7 +74,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -90,6 +93,9 @@ export const tableModule: ModuleDescriptor = {
       filter: "",
       striped: opts.striped ?? true,
       bordered: opts.bordered ?? true,
+      virtualized: opts.virtualized ?? false,
+      rowHeight: opts.rowHeight ?? 32,
+      viewportHeight: opts.viewportHeight ?? 400,
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -146,21 +152,68 @@ export const tableModule: ModuleDescriptor = {
     const tbody = document.createElement("tbody");
     const filtered = filterRows(m.rows, m.filter);
     const sorted = sortRows(filtered, m.sortColumn, m.sortDirection);
-    const start = m.currentPage * m.pageSize;
-    const pageRows = sorted.slice(start, start + m.pageSize);
 
-    pageRows.forEach((row, ri) => {
-      const tr = document.createElement("tr");
-      if (m.striped && ri % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
-      m.columns.forEach(col => {
-        const td = document.createElement("td");
-        td.textContent = String(row.cells[col.id] ?? "");
-        td.style.padding = "8px";
-        td.style.borderBottom = "1px solid #eee";
-        tr.appendChild(td);
+    if (m.virtualized) {
+      // Virtualized rendering: only render visible rows
+      const totalHeight = sorted.length * m.rowHeight;
+      const visibleCount = Math.ceil(m.viewportHeight / m.rowHeight) + 2; // +2 for buffer
+      const scrollTop = 0; // simplified: start from top
+      const startIndex = Math.floor(scrollTop / m.rowHeight);
+      const endIndex = Math.min(startIndex + visibleCount, sorted.length);
+      const offsetY = startIndex * m.rowHeight;
+
+      // Spacer for scroll position
+      const spacerTop = document.createElement("tr");
+      const spacerTd = document.createElement("td");
+      spacerTd.style.height = `${offsetY}px`;
+      spacerTd.style.padding = "0";
+      spacerTd.colSpan = m.columns.length;
+      spacerTop.appendChild(spacerTd);
+      tbody.appendChild(spacerTop);
+
+      for (let i = startIndex; i < endIndex; i++) {
+        const row = sorted[i];
+        if (!row) continue;
+        const tr = document.createElement("tr");
+        tr.style.height = `${m.rowHeight}px`;
+        if (m.striped && i % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
+        m.columns.forEach(col => {
+          const td = document.createElement("td");
+          td.textContent = String(row.cells[col.id] ?? "");
+          td.style.padding = "8px";
+          td.style.borderBottom = "1px solid #eee";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      }
+
+      // Spacer for remaining rows
+      const remaining = sorted.length - endIndex;
+      if (remaining > 0) {
+        const spacerBottom = document.createElement("tr");
+        const spacerBtd = document.createElement("td");
+        spacerBtd.style.height = `${remaining * m.rowHeight}px`;
+        spacerBtd.style.padding = "0";
+        spacerBtd.colSpan = m.columns.length;
+        spacerBottom.appendChild(spacerBtd);
+        tbody.appendChild(spacerBottom);
+      }
+    } else {
+      const start = m.currentPage * m.pageSize;
+      const pageRows = sorted.slice(start, start + m.pageSize);
+      pageRows.forEach((row, ri) => {
+        const tr = document.createElement("tr");
+        if (m.striped && ri % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
+        m.columns.forEach(col => {
+          const td = document.createElement("td");
+          td.textContent = String(row.cells[col.id] ?? "");
+          td.style.padding = "8px";
+          td.style.borderBottom = "1px solid #eee";
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
       });
-      tbody.appendChild(tr);
-    });
+    }
     table.appendChild(tbody);
     container.appendChild(table);
 
@@ -174,7 +227,9 @@ export const tableModule: ModuleDescriptor = {
     pagination.style.fontSize = "12px";
 
     const info = document.createElement("span");
-    info.textContent = `Showing ${start + 1}-${Math.min(start + m.pageSize, filtered.length)} of ${filtered.length}`;
+    const displayStart = m.virtualized ? 1 : m.currentPage * m.pageSize + 1;
+    const displayEnd = m.virtualized ? Math.min(m.viewportHeight / m.rowHeight + 2, sorted.length) : Math.min(m.currentPage * m.pageSize + m.pageSize, filtered.length);
+    info.textContent = `Showing ${displayStart}-${Math.floor(displayEnd)} of ${filtered.length}`;
     pagination.appendChild(info);
 
     const nav = document.createElement("div");
