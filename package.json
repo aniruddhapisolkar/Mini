@@ -1,0 +1,65 @@
+{
+  "name": "mini",
+  "version": "0.0.0-phase1",
+  "description": "Mini — unified, ultra-fast, lightweight rendering library for the web.",
+  "type": "module",
+  "main": "dist/mini.cjs",
+  "module": "dist/mini.mjs",
+  "types": "dist/mini.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/mini.d.ts",
+      "import": "./dist/mini.mjs",
+      "require": "./dist/mini.cjs"
+    },
+    "./render": {
+      "types": "./dist/render.d.ts",
+      "import": "./dist/render.mjs",
+      "require": "./dist/render.cjs"
+    },
+    "./math": {
+      "types": "./dist/math.d.ts",
+      "import": "./dist/math.mjs",
+      "require": "./dist/math.cjs"
+    },
+    "./diagram": {
+      "types": "./dist/diagram.d.ts",
+      "import": "./dist/diagram.mjs",
+      "require": "./dist/diagram.cjs"
+    },
+    "./text": {
+      "types": "./dist/text.d.ts",
+      "import": "./dist/text.mjs",
+      "require": "./dist/text.cjs"
+    },
+    "./code": {
+      "types": "./dist/code.d.ts",
+      "import": "./dist/code.mjs",
+      "require": "./dist/code.cjs"
+    },
+    "./chart": {
+      "types": "./dist/chart.d.ts",
+      "import": "./dist/chart.mjs",
+      "require": "./dist/chart.cjs"
+    },
+    "./table": {
+      "types": "./dist/table.d.ts",
+      "import": "./dist/table.mjs",
+      "require": "./dist/table.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "bench": "vitest run --config vitest.bench.config.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  },
+  "license": "MIT",
+  "sideEffects": false
+}
