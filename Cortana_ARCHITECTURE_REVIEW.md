@@ -248,3 +248,48 @@ If two modules need the same infrastructure, it goes in MiniRender. If only one 
 | MiniCode | Jimbo | Pending |
 | MiniChart | Cortana | Done (cortana/data) |
 | MiniTable | Cortana | Done (cortana/data) |
+
+
+---
+
+## Appendix: Review of Jimbo's Proposals (Phase 0)
+
+### 1. Measurement Contract Reconciliation
+
+Jimbo proposed `Measurement { intrinsic, min, max?, baseline?, bbox }`. I proposed `MeasureResult { width, height, baseline?, minWidth?, ... }`. Reconciled: merge both, using Jimbo's structural approach with individual dimension fields.
+
+### 2. Span Interface — Agree
+
+Jimbo's `Span` interface is a good shared primitive. Extended slightly for chart/table use with optional `dataRef`.
+
+### 3. StreamController — Agree, with data extension
+
+Extended with `pushData` and `onBackpressure` for real-time chart/table updates.
+
+### 4. IncrementalUpdate — Agree, with data extension
+
+Extended with `changedData` for chart/table data indices.
+
+### 5. TextMeasurer — Agree
+
+Promoting to shared is essential for MiniChart/MiniTable too.
+
+### 6. Oniguruma WASM Licensing — Needs Investigation
+
+Critical blocker for standalone HTML. Proposed Option C (optional capability) as primary, Option A (inlined WASM) as fallback.
+
+### 7. sanitizeHtml, TextProcessor, Typography — Agree
+
+All should be shared MiniRender utilities.
+
+### 8. Data/Virtualization/Interaction Concerns
+
+Jimbo's streaming and incremental contracts affect MiniChart/MiniTable. Shared virtualization in MiniRender/virtualization/. Backpressure handling essential.
+
+### 9. Open Decisions — Reconciled
+
+All six decisions agreed. New decisions 7-10 proposed (virtualization location, backend fallback, RenderNode generic, MeasureResult baseline).
+
+### 10. Licensing — Additional Verification Needed
+
+Oniguruma (BSD) for Shiki. D3 submodules (BSD-3) for Recharts. jQuery (MIT) for DataTables. KaTeX fonts. Need comprehensive THIRD_PARTY_NOTICES.md in Phase 1.
