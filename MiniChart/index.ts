@@ -155,6 +155,7 @@ export const chartModule: ModuleDescriptor = {
             rect.setAttribute("width", String(barW));
             rect.setAttribute("height", String(h));
             rect.setAttribute("fill", ds.color ?? resolveColor(di));
+            rect.setAttribute("data-value", String(val));
             svg.appendChild(rect);
           });
         });
@@ -237,6 +238,34 @@ export const chartModule: ModuleDescriptor = {
         svg.appendChild(text);
       });
     }
+
+    // Tooltip element
+    const tooltip = document.createElement("div");
+    tooltip.className = "mini-chart-tooltip";
+    tooltip.style.position = "absolute";
+    tooltip.style.display = "none";
+    tooltip.style.background = "rgba(0,0,0,0.8)";
+    tooltip.style.color = "#fff";
+    tooltip.style.padding = "4px 8px";
+    tooltip.style.borderRadius = "4px";
+    tooltip.style.fontSize = "12px";
+    tooltip.style.pointerEvents = "none";
+    container.appendChild(tooltip);
+
+    // Add hover handlers to bars for tooltip
+    const bars = svg.querySelectorAll("rect");
+    bars.forEach((bar, i) => {
+      bar.addEventListener("mouseenter", (e) => {
+        const val = (e.target as SVGRectElement).getAttribute("data-value");
+        if (val) {
+          tooltip.textContent = val;
+          tooltip.style.display = "block";
+        }
+      });
+      bar.addEventListener("mouseleave", () => {
+        tooltip.style.display = "none";
+      });
+    });
 
     container.appendChild(svg);
     (ctx.container.element as HTMLElement).appendChild(container);
