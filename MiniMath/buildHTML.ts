@@ -135,9 +135,11 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
     }
     case "environment": case "array": case "matrix": case "cases": case "aligned": {
       const rows = (node.body as Expression[]).map(row => {
-        const cells = (Array.isArray(row) ? row : [row]).map(cell => {
+        const cells = (Array.isArray(row) ? row : [row]).map((cell, ci) => {
           const c = Array.isArray((cell as any).body) ? (cell as any).body : [cell];
-          return `<span class="cell">${c.map((n: any) => renderNode(n, opts, display)).join("")}</span>`;
+          const alignChar = (node.colAlign && node.colAlign[ci]) ? String(node.colAlign[ci]) : "c";
+          const ta = alignChar === "l" ? "left" : alignChar === "r" ? "right" : "center";
+          return `<span class="cell" style="text-align:${ta}">${c.map((n: any) => renderNode(n, opts, display)).join("")}</span>`;
         }).join(`<span class="align-sep"></span>`);
         return `<span class="row">${cells}</span>`;
       }).join(`<br/>`);
