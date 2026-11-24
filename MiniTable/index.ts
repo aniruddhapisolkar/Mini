@@ -41,6 +41,7 @@ interface TableModel extends SemanticModel {
   viewportHeight: number;
   selectable: boolean;
   selectedRows: Set<string>;
+  resizable: boolean;
 }
 
 // ---- Helpers ----
@@ -76,7 +77,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -100,6 +101,7 @@ export const tableModule: ModuleDescriptor = {
       viewportHeight: opts.viewportHeight ?? 400,
       selectable: opts.selectable ?? false,
       selectedRows: new Set(),
+      resizable: opts.resizable ?? false,
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -168,6 +170,19 @@ export const tableModule: ModuleDescriptor = {
           container.innerHTML = "";
           const newResult = tableModule.render(m, ctx);
         });
+      }
+      // Resize handle
+      if (m.resizable) {
+        const handle = document.createElement("div");
+        handle.style.position = "absolute";
+        handle.style.right = "0";
+        handle.style.top = "0";
+        handle.style.width = "4px";
+        handle.style.height = "100%";
+        handle.style.cursor = "col-resize";
+        handle.style.userSelect = "none";
+        th.style.position = "relative";
+        th.appendChild(handle);
       }
       headerRow.appendChild(th);
     });
