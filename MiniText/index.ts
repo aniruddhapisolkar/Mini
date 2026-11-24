@@ -71,3 +71,5 @@ export { parseMarkdown, parseInlines } from "./parser.js";
 export type { TextDocument, BlockNode, InlineNode } from "./types.js";
 export { renderDocument, renderBlocks } from "./render.js";
 export { textModule as miniText };
+export { createTextStream } from "./stream.js";
+export type { TextStreamController } from "./stream.js";
