@@ -7,6 +7,7 @@ import type {
   ModuleDescriptor, SemanticModel, RenderContext, RenderResult, RenderNode,
 } from "../MiniRender/core/interfaces";
 import { register } from "../MiniRender/core/registry";
+import { renderToHTML } from "../MiniMath/index.js";
 
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
@@ -200,7 +201,12 @@ export function renderSVG(model: DiagramModel): string {
       shapeSvg = `<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="1.5"/>`;
     }
     parts.push(shapeSvg);
-    parts.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="currentColor">${escapeXml(n.label)}</text>`);
+    if (/\$/.test(n.label)) {
+      const mathHtml = renderToHTML(n.label.replace(/\$/g, ""), { displayMode: false });
+      parts.push(`<foreignObject x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:12px">${mathHtml}</div></foreignObject>`);
+    } else {
+      parts.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="currentColor">${escapeXml(n.label)}</text>`);
+    }
   }
   parts.push(`</svg>`);
   return parts.join("");
