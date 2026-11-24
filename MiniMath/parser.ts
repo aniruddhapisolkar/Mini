@@ -551,6 +551,13 @@ export class Parser {
       const p = this.peek();
       if (p.type === "end") break;
       if (p.type === "eof") break;
+      if (p.type === "command" && (p.value === "hline" || p.value === "cline")) {
+        this.next();
+        if (p.value === "cline") { /* consume optional [range] */ if (this.peek().type === "group_open") { this.next(); this.parseExpression(); this.expect("group_close"); } }
+        if (currentCell.length || currentRow.length) { flushCell(); rows.push(currentRow); currentRow = []; }
+        rows.push([{ type: "hline", mode: this.mode } as any]);
+        continue;
+      }
       if (p.type === "align") { this.next(); flushCell(); continue; }
       // cr handled via command token below
       if (p.type === "command" && (p.value == "\\" || p.value === "cr" || p.value === "newline")) { this.next(); flushRow(); continue; }

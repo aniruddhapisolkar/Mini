@@ -24,6 +24,7 @@ describe("MiniMath parse/renderToHTML", () => {
     "\\xrightarrow[f]{g}",
     "\\fbox{x}",
     "\\mathclap{x}",
+    "\\begin{array}{cc}a&b\\\\\\hline c&d\\end{array}",
     "\\left(\\frac{a}{b}\\right)",
     "\\overline{abc}",
     "\\hat{x}",
