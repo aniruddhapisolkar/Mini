@@ -2,6 +2,8 @@
 
 import type { BlockNode, InlineNode, TextDocument } from "./types.js";
 import { sanitizeHtml, Typography, TextProcessor } from "../MiniRender/text/index.js";
+import { tokenize } from "../MiniCode/tokenizer.js";
+import { getTheme } from "../MiniCode/themes.js";
 const escapeHtml = TextProcessor.escapeHtml;
 
 export interface RenderOptions {
@@ -33,8 +35,21 @@ function renderBlock(b: BlockNode, opts: RenderOptions, sanitize: boolean, typo:
     case "thematicBreak":
       return `<hr class="mini-text-hr" />`;
     case "codeBlock": {
-      const lang = b.language ? ` class="language-${escapeHtml(b.language)}"` : "";
-      return `<pre class="mini-text-pre"><code${lang}>${escapeHtml(b.value)}</code></pre>`;
+      const lang = b.language || "text";
+      const theme = getTheme("github-light");
+      let highlighted = "";
+      try {
+        const toks = tokenize(b.value, lang);
+        for (const t of toks) {
+          if (t.text === "\\n") { highlighted += "\\n"; continue; }
+          const color = (theme.colors as any)[t.scope] || theme.foreground;
+          highlighted += `<span style="color:${color}">${escapeHtml(t.text)}</span>`;
+        }
+      } catch {
+        highlighted = escapeHtml(b.value);
+      }
+      const cls = b.language ? ` class="language-${escapeHtml(b.language)}"` : "";
+      return `<pre class="mini-text-pre"><code${cls}>${highlighted}</code></pre>`;
     }
     case "htmlBlock":
       return sanitize ? sanitizeHtml(b.value) : b.value;

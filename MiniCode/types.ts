@@ -19,6 +19,7 @@ export type TokenScope =
   | "escape"
   | "meta"
   | "macro"
+  | "atom"
   | "symbol"
   | "key"
   | "section"

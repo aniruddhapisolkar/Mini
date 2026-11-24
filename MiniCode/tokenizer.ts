@@ -267,6 +267,115 @@ reg(makeGrammar("dockerfile", [
   ["variable", /\$\{?[a-zA-Z_][\w]*\}?/],
 ], ["docker"]));
 
+// Kotlin
+reg(makeGrammar("kotlin", [
+  ...C_STYLE_COMMENTS,
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:fun|val|var|class|object|interface|package|import|return|if|else|for|while|do|when|try|catch|finally|throw|true|false|null|is|as|in|out|this|super|constructor|init|companion|data|sealed|enum|annotation|override|open|final|abstract|private|protected|public|internal|lateinit|lazy|suspend|tailrec|inline|reified|crossinline|noinline|operator|infix|external|expect|actual|where|by|get|set|field|property|receiver|param|setparam|delegate)\b/],
+  ["type", /\b[A-Z][a-zA-Z0-9_]*\b/],
+  ["function", /\b[a-zA-Z_][\w]*(?=\s*\()/],
+  ["operator", /[+\-*/%=<>!&|^~?:]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["kt", "kts"]));
+
+// Swift
+reg(makeGrammar("swift", [
+  ...C_STYLE_COMMENTS,
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:func|var|let|class|struct|enum|protocol|extension|import|return|if|else|for|while|repeat|switch|case|default|break|continue|fallthrough|guard|defer|do|try|catch|throw|throws|rethrows|true|false|nil|self|super|init|deinit|mutating|nonmutating|static|final|override|public|private|internal|fileprivate|open|weak|unowned|lazy|inout|where|as|is|in|associatedtype|typealias|indirect|convenience|required|optional|some|any)\b/],
+  ["type", /\b[A-Z][a-zA-Z0-9_]*\b/],
+  ["function", /\b[a-zA-Z_][\w]*(?=\s*\()/],
+  ["operator", /[+\-*/%=<>!&|^~?]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["swift"]));
+
+// Scala
+reg(makeGrammar("scala", [
+  ...C_STYLE_COMMENTS,
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:def|val|var|class|object|trait|extends|with|import|package|return|if|else|for|while|do|match|case|try|catch|finally|throw|new|this|super|true|false|null|sealed|abstract|final|override|private|protected|implicit|lazy|override|type|yield|forSome|macro)\b/],
+  ["type", /\b[A-Z][a-zA-Z0-9_]*\b/],
+  ["function", /\b[a-zA-Z_][\w]*(?=\s*\()/],
+  ["operator", /[+\-*/%=<>!&|^~?:]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["scala"]));
+
+// Haskell
+reg(makeGrammar("haskell", [
+  ...HASH_COMMENTS,
+  ["comment", /\{-[\s\S]*?-\}/],
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:module|import|qualified|as|hiding|data|type|newtype|class|instance|deriving|where|let|in|do|if|then|else|case|of|forall|mdo|rec|proc)\b/],
+  ["type", /\b[A-Z][a-zA-Z0-9_']*\b/],
+  ["function", /\b[a-z][a-zA-Z0-9_']*\b/],
+  ["operator", /[+\-*/%=<>!&|^~:.]+/],
+  ["punctuation", /[{}()\[\];,]/],
+], ["hs"]));
+
+// Lua
+reg(makeGrammar("lua", [
+  ...HASH_COMMENTS,
+  ["comment", /--\[\[[\s\S]*?\]\]/],
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:local|function|return|if|then|elseif|else|for|while|do|repeat|until|break|in|end|and|or|not|true|false|nil)\b/],
+  ["function", /\b[a-zA-Z_][\w]*(?=\s*\()/],
+  ["operator", /[+\-*/%=<>~#]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["lua"]));
+
+// Perl
+reg(makeGrammar("perl", [
+  ["comment", /#[^\n]*/],
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:my|our|use|package|sub|return|if|elsif|else|for|foreach|while|until|do|last|next|redo|goto|print|say|open|close|new|bless|package|require|import)\b/],
+  ["variable", /[$@%][a-zA-Z_][\w]*/],
+  ["function", /\b[a-zA-Z_][\w]*(?=\s*\()/],
+  ["operator", /[+\-*/%=<>!&|^~]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["pl", "pm"]));
+
+// Elixir
+reg(makeGrammar("elixir", [
+  ["comment", /#[^\n]*/],
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:def|defp|defmodule|defmacro|defstruct|defimpl|defprotocol|do|end|if|else|unless|case|cond|for|with|fn|->|when|try|rescue|catch|after|raise|import|alias|require|use|true|false|nil|and|or|not|in)\b/],
+  ["atom", /:[a-zA-Z_][\w]*/],
+  ["function", /\b[a-zA-Z_][\w]*(?=\s*\()/],
+  ["operator", /[+\-*/%=<>!&|^~]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["ex", "exs"]));
+
+// Julia
+reg(makeGrammar("julia", [
+  ["comment", /#[^\n]*/],
+  ["comment", /#=([\s\S]*?)=#/],
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:function|return|if|elseif|else|for|while|break|continue|try|catch|finally|throw|struct|mutable|abstract|primitive|type|module|import|using|export|const|local|global|macro|quote|let|do|begin|end|true|false|nothing)\b/],
+  ["type", /\b[A-Z][a-zA-Z0-9_]*\b/],
+  ["function", /\b[a-zA-Z_][\w]*(?=\s*\()/],
+  ["operator", /[+\-*/%=<>!&|^~]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["jl"]));
+
+// R
+reg(makeGrammar("r", [
+  ["comment", /#[^\n]*/],
+  ...STRINGS_DOUBLE,
+  ...NUMBERS,
+  ["keyword", /\b(?:function|if|else|for|while|repeat|break|next|return|in|TRUE|FALSE|NULL|NA|Inf|NaN|library|require)\b/],
+  ["function", /\b[a-zA-Z_.][\w.]*\s*(?=\()/],
+  ["operator", /<-|<<-|->|->>|%[a-zA-Z]+%|[+\-*/%=<>!&|^~]+/],
+  ["punctuation", /[{}()\[\];,.]/],
+], ["r"]));
+
 // Default fallback
 reg(makeGrammar("text", [], ["plain", "txt"]));
 
