@@ -1,6 +1,6 @@
 // MiniRender — HTML backend (Phase 1 minimal)
 
-import type { Backend, BackendId, Capability, RenderContext, RenderNode, RenderTarget } from "../core/types";
+import type { Backend, BackendId, Capability, FontSpec, RenderContext, RenderNode, RenderTarget, TextMetrics } from "../core/types";
 
 export const htmlBackend: Backend = {
   id: "html",
@@ -27,7 +27,7 @@ export const htmlBackend: Backend = {
   clear(target: RenderTarget): void {
     target.element.innerHTML = "";
   },
-  measureText(text: string, font: { family: string; size: number }): TextMetrics {
+  measureText(text: string, font: FontSpec): TextMetrics {
     // Canvas-based measurement fallback using DOM span
     const span = document.createElement("span");
     span.style.fontFamily = font.family;

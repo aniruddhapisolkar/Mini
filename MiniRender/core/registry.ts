@@ -7,7 +7,8 @@ const registry = new Map<ModuleKind, ModuleDescriptor>();
 
 export function register(descriptor: ModuleDescriptor): void {
   if (registry.has(descriptor.id)) {
-    if (typeof process !== "undefined" && process.env?.NODE_ENV !== "production") {
+    const proc = (globalThis as { process?: { env?: { NODE_ENV?: string } } }).process;
+    if (proc && proc.env?.NODE_ENV !== "production") {
       throw new Error(`Module already registered: ${descriptor.id}`);
     }
     // eslint-disable-next-line no-console

@@ -37,7 +37,11 @@ export class DefaultCache implements Cache {
     return e.value as T;
   }
   set<T>(key: string, value: T, ttlMs?: number): void {
-    this.store.set(key, { value, expires: ttlMs ? Date.now() + ttlMs : undefined });
+    if (ttlMs) {
+      this.store.set(key, { value, expires: Date.now() + ttlMs });
+    } else {
+      this.store.set(key, { value });
+    }
   }
   has(key: string): boolean { return this.get(key) !== undefined; }
   delete(key: string): void { this.store.delete(key); }

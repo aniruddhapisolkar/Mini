@@ -7,7 +7,7 @@ import type {
 } from "../MiniRender/core/types";
 import { register } from "../MiniRender/core/registry";
 
-interface DiagramNode { id: string; label: string; embed?: { kind: "math"; input: string }; }
+interface DiagramNode { id: string; label: string; embed?: { kind: "math"; input: string } | undefined; }
 interface DiagramModel extends SemanticModel { kind: "diagram"; nodes: DiagramNode[]; }
 
 export const diagramModule: ModuleDescriptor = {
@@ -21,10 +21,11 @@ export const diagramModule: ModuleDescriptor = {
     // Minimal: each line "id: label" becomes a node; "[math: ...]" embeds math.
     const nodes: DiagramNode[] = src.split("\n").filter(Boolean).map((line, i) => {
       const m = line.match(/^(\w+):\s*(.*)$/);
-      const id = m ? m[1] : `n${i}`;
-      const label = m ? m[2] : line;
+      const id = m && m[1] ? m[1] : `n${i}`;
+      const label = m && m[2] ? m[2] : line;
       const em = label.match(/\[math:\s*(.+)\]/);
-      return { id, label: em ? label.replace(em[0], "").trim() : label, embed: em ? { kind: "math", input: em[1] } : undefined };
+      const embedInput = em && em[1] ? em[1] : undefined;
+      return { id, label: em ? label.replace(em[0], "").trim() : label, embed: embedInput ? { kind: "math" as const, input: embedInput } : undefined };
     });
     return { kind: "diagram", version: 1, nodes };
   },
