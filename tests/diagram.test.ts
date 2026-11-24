@@ -25,3 +25,19 @@ describe("MiniDiagram", () => {
     expect(m.edges[0].label).toBe("yes");
   });
 });
+
+describe("MiniDiagram sequence", () => {
+  it("parses sequence diagram", () => {
+    const m = parseDiagram("sequenceDiagram\nAlice->>Bob: Hello\nBob-->Alice: Hi");
+    expect(m.diagramType).toBe("sequence");
+    expect(m.sequence!.participants).toContain("Alice");
+    expect(m.sequence!.messages.length).toBe(2);
+  });
+  it("renders sequence SVG", () => {
+    const m = parseDiagram("sequenceDiagram\nA->>B: hi");
+    const svg = renderSVG(m);
+    expect(svg).toContain("<svg");
+    expect(svg).toContain("A");
+    expect(svg).toContain("hi");
+  });
+});
