@@ -217,6 +217,27 @@ export const chartModule: ModuleDescriptor = {
       });
     }
 
+    // Legend for multi-dataset charts
+    if (m.datasets.length > 1) {
+      const legendY = m.height - 12;
+      m.datasets.forEach((ds, i) => {
+        const x = padding.left + i * 90;
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", String(x));
+        rect.setAttribute("y", String(legendY - 8));
+        rect.setAttribute("width", "12");
+        rect.setAttribute("height", "8");
+        rect.setAttribute("fill", ds.color ?? resolveColor(i));
+        svg.appendChild(rect);
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", String(x + 16));
+        text.setAttribute("y", String(legendY));
+        text.setAttribute("font-size", "10");
+        text.textContent = ds.label;
+        svg.appendChild(text);
+      });
+    }
+
     container.appendChild(svg);
     (ctx.container.element as HTMLElement).appendChild(container);
 
