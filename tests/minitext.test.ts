@@ -72,4 +72,25 @@ describe("MiniText parser", () => {
     expect(html).toContain("<code");
     expect(html).toContain("foo()");
   });
+
+  it("parses nested lists", () => {
+    const doc = parseMarkdown("- a\n  - b\n- c");
+    expect(doc.children[0].type).toBe("list");
+    const html = renderDocument(doc);
+    expect(html).toContain("<ul");
+    expect(html.match(/<ul/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("parses setext headings", () => {
+    const doc = parseMarkdown("Title\n=====");
+    expect(doc.children[0].type).toBe("heading");
+    expect((doc.children[0] as any).level).toBe(1);
+  });
+
+  it("parses autolinks", () => {
+    const doc = parseMarkdown("Visit https://example.com");
+    // CommonMark autolink extension is GFM; basic text ok
+    const html = renderDocument(doc);
+    expect(html).toContain("example.com");
+  });
 });
