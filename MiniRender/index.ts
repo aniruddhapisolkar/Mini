@@ -1,16 +1,23 @@
-// MiniRender — default implementations of shared services (Phase 1)
+// MiniRender — default implementations of shared services (Phase 1, aligned with Cortana)
 
 import type {
-  Backend, BackendId, Cache, Diagnostics, Diagnostic, ModuleKind, RenderContext,
-  RenderHandle, RenderNode, RenderTarget, ResourceManager, Resource, Scheduler, StyleScope,
+  BackendId, Diagnostic, ModuleKind, RenderHandle, RenderTarget, StyleScope,
 } from "./core/types";
+import type {
+  Backend, Cache, Diagnostics, RenderContext, RenderNode, ResourceManager, Scheduler,
+} from "./core/interfaces";
 
 // ---- Diagnostics ----
 export class DefaultDiagnostics implements Diagnostics {
-  private items: Diagnostic[] = [];
-  emit(d: Diagnostic): void { this.items.push(d); }
-  list(): Diagnostic[] { return [...this.items]; }
-  clear(): void { this.items = []; }
+  private errors: Diagnostic[] = [];
+  private warnings: Diagnostic[] = [];
+  report(d: Diagnostic): void {
+    if (d.level === "error") this.errors.push(d);
+    else if (d.level === "warning") this.warnings.push(d);
+  }
+  getErrors(): Diagnostic[] { return [...this.errors]; }
+  getWarnings(): Diagnostic[] { return [...this.warnings]; }
+  clear(): void { this.errors = []; this.warnings = []; }
 }
 
 // ---- Scheduler ----
@@ -23,49 +30,27 @@ export class DefaultScheduler implements Scheduler {
     const q = this.queue.splice(0);
     for (const fn of q) fn();
   }
-  cancelAll(): void { this.queue = []; this.invalidated.clear(); }
-  invalidatedNodes(): string[] { return [...this.invalidated]; }
 }
 
 // ---- Cache ----
 export class DefaultCache implements Cache {
-  private store = new Map<string, { value: unknown; expires?: number }>();
-  get<T>(key: string): T | undefined {
-    const e = this.store.get(key);
-    if (!e) return undefined;
-    if (e.expires && Date.now() > e.expires) { this.store.delete(key); return undefined; }
-    return e.value as T;
-  }
-  set<T>(key: string, value: T, ttlMs?: number): void {
-    if (ttlMs) {
-      this.store.set(key, { value, expires: Date.now() + ttlMs });
-    } else {
-      this.store.set(key, { value });
-    }
-  }
-  has(key: string): boolean { return this.get(key) !== undefined; }
+  private store = new Map<string, unknown>();
+  get<T>(key: string): T | undefined { return this.store.get(key) as T | undefined; }
+  set<T>(key: string, value: T): void { this.store.set(key, value); }
+  has(key: string): boolean { return this.store.has(key); }
   delete(key: string): void { this.store.delete(key); }
   clear(): void { this.store.clear(); }
 }
 
 // ---- ResourceManager ----
 export class DefaultResourceManager implements ResourceManager {
-  private resources = new Map<string, Resource>();
-  acquire(id: string, type: Resource["type"], owner: ModuleKind | "render"): Resource {
-    const existing = this.resources.get(id);
-    if (existing) { existing.refCount++; return existing; }
-    const r: Resource = { id, type, owner, refCount: 1 };
-    this.resources.set(id, r);
-    return r;
+  private store = new Map<string, unknown>();
+  acquire(key: string, factory: () => unknown): unknown {
+    if (!this.store.has(key)) this.store.set(key, factory());
+    return this.store.get(key);
   }
-  release(id: string): void {
-    const r = this.resources.get(id);
-    if (!r) return;
-    r.refCount--;
-    if (r.refCount <= 0) this.resources.delete(id);
-  }
-  get(id: string): Resource | undefined { return this.resources.get(id); }
-  list(): Resource[] { return [...this.resources.values()]; }
+  release(key: string): void { this.store.delete(key); }
+  has(key: string): boolean { return this.store.has(key); }
 }
 
 // ---- Backend resolution ----
@@ -78,21 +63,22 @@ export function resolveBackend(
   if (requested) chain.push(requested);
   chain.push(...moduleSupported);
   chain.push(...available);
-  chain.push("html"); // universal fallback
+  chain.push("html");
   for (const b of chain) {
     if (moduleSupported.includes(b) && available.includes(b)) return b;
   }
-  // last resort
   if (available.includes("html")) return "html";
   return null;
 }
 
-// ---- StyleScope helper ----
-export function createScope(root: HTMLElement, variables: Record<string, string> = {}): StyleScope {
-  return { root, variables };
+export function createScope(id: string, variables: Record<string, string> = {}, parent?: StyleScope): StyleScope {
+  if (parent) return { id, variables, parent };
+  return { id, variables };
 }
 
 export { htmlBackend } from "./backends/html";
-export type { Backend, BackendId } from "./core/types";
+export type { BackendId } from "./core/types";
+export type { Backend } from "./core/interfaces";
 export * from "./core/types";
+export * from "./core/interfaces";
 export * from "./core/registry";

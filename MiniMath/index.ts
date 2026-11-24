@@ -2,9 +2,11 @@
 // Demonstrates module contract: parse/render/measure + composition.
 
 import type {
-  ModuleDescriptor, ModuleKind, SemanticModel, RenderContext, RenderResult, RenderHandle, RenderNode,
-  MeasureConstraints, MeasureResult, Size,
+  ModuleKind, MeasureConstraints, MeasureResult, Size, RenderHandle,
 } from "../MiniRender/core/types";
+import type {
+  ModuleDescriptor, SemanticModel, RenderContext, RenderResult, RenderNode,
+} from "../MiniRender/core/interfaces";
 import { register } from "../MiniRender/core/registry";
 
 interface MathModel extends SemanticModel { kind: "math"; latex: string; }
@@ -27,15 +29,15 @@ export const mathModule: ModuleDescriptor = {
     span.textContent = m.latex;
     span.setAttribute("role", "math");
     span.setAttribute("aria-label", m.latex);
-    ctx.container.element.appendChild(span);
+    (ctx.container.element as HTMLElement).appendChild(span);
     const handle: RenderHandle = {
-      id: node.id, kind: "math", root: node,
+      id: node.id,
       update(input) { span.textContent = String(input ?? ""); },
       destroy() { span.remove(); },
     };
     return { handle, node };
   },
-  measure(_model, _ctx, _constraints?: MeasureConstraints): MeasureResult {
+  measure(_model: SemanticModel, _ctx: RenderContext, _constraints?: MeasureConstraints): MeasureResult {
     // Approximate: 0.6em per char width, 1.2em height
     const latex = (_model as MathModel).latex;
     const w = latex.length * 8;

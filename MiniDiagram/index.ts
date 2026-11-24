@@ -2,9 +2,11 @@
 // Demonstrates module contract + cross-module composition (math-in-diagram).
 
 import type {
-  ModuleDescriptor, SemanticModel, RenderContext, RenderResult, RenderHandle, RenderNode,
-  MeasureConstraints, MeasureResult,
+  MeasureConstraints, MeasureResult, RenderHandle,
 } from "../MiniRender/core/types";
+import type {
+  ModuleDescriptor, SemanticModel, RenderContext, RenderResult, RenderNode,
+} from "../MiniRender/core/interfaces";
 import { register } from "../MiniRender/core/registry";
 
 interface DiagramNode { id: string; label: string; embed?: { kind: "math"; input: string } | undefined; }
@@ -27,7 +29,7 @@ export const diagramModule: ModuleDescriptor = {
       const embedInput = em && em[1] ? em[1] : undefined;
       return { id, label: em ? label.replace(em[0], "").trim() : label, embed: embedInput ? { kind: "math" as const, input: embedInput } : undefined };
     });
-    return { kind: "diagram", version: 1, nodes };
+    return { kind: "diagram", version: 1, nodes } as unknown as DiagramModel;
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
     const m = model as DiagramModel;
@@ -55,15 +57,15 @@ export const diagramModule: ModuleDescriptor = {
       container.appendChild(nodeEl);
       root.children!.push({ id: n.id, kind: "element" });
     }
-    ctx.container.element.appendChild(container);
+    (ctx.container.element as HTMLElement).appendChild(container);
     const handle: RenderHandle = {
-      id: root.id, kind: "diagram", root,
+      id: root.id,
       update() { /* no-op in stub */ },
       destroy() { container.remove(); },
     };
     return { handle, node: root };
   },
-  measure(_model, _ctx): MeasureResult {
+  measure(_model: SemanticModel, _ctx: RenderContext): MeasureResult {
     const m = _model as DiagramModel;
     const w = Math.max(120, m.nodes.length * 80);
     const h = m.nodes.length * 24 + 16;

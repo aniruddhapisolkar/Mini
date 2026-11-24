@@ -1,7 +1,8 @@
 // MiniRender — module registration (Phase 1)
 // Explicit, tree-shakeable. No side-effect imports.
 
-import type { ModuleDescriptor, ModuleKind } from "./types";
+import type { ModuleKind } from "./types";
+import type { ModuleDescriptor } from "./interfaces";
 
 const registry = new Map<ModuleKind, ModuleDescriptor>();
 
