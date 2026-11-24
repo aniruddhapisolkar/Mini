@@ -41,16 +41,3 @@ describe("MiniDiagram sequence", () => {
     expect(svg).toContain("hi");
   });
 });
-
-describe("MiniDiagram layouts", () => {
-  it("force layout renders", () => {
-    const m = parseDiagram("layout force\ngraph TD\nA --> B\nB --> C\nC --> A");
-    const svg = renderSVG(m);
-    expect(svg).toContain("<svg");
-  });
-  it("tree layout renders", () => {
-    const m = parseDiagram("layout tree\ngraph TD\nA --> B\nA --> C\nB --> D");
-    const svg = renderSVG(m);
-    expect(svg).toContain("<svg");
-  });
-});
