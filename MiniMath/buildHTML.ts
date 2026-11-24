@@ -189,6 +189,9 @@ function accentChar(label: string): string {
   const map: Record<string, string> = {
     hat: "̂", check: "̌", tilde: "̃", acute: "́", grave: "̀",
     dot: "̇", ddot: "̈", bar: "̄", breve: "̆", vec: "⃗",
+    widehat: "̂", widetilde: "̃",
+    overrightarrow: "→", overleftarrow: "←", overleftrightarrow: "↔",
+    overparen: "⏜", underparen: "⏝",
   };
   return map[label] ?? "̂";
 }
