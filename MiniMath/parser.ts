@@ -181,6 +181,11 @@ export class Parser {
       const base = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
     }
+    if (name === "overrightarrow" || name === "overleftarrow" || name === "overleftrightarrow" ||
+        name === "widehat" || name === "widetilde" || name === "overparen" || name === "underparen") {
+      const base = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
+    }
     if (name === "overline" || name === "bar") {
       const base = this.parseGroupOrAtom();
       if (name === "overline") return this.parseSupSub({ type: "overline", mode: this.mode, body: Array.isArray(base) ? base : [base] } as N.ParseNode);
@@ -343,7 +348,7 @@ export class Parser {
     }
 
     // \boxed
-    if (name === "boxed") {
+    if (name === "boxed" || name === "fbox" || name === "framebox") {
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "boxed", mode: this.mode, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
@@ -449,6 +454,39 @@ export class Parser {
       return this.parseSupSub({ type: "delim", mode: this.mode, text: d, size: scale } as N.ParseNode);
     }
 
+    if (name === "stackrel") {
+      const top = this.parseGroupOrAtom();
+      const base = this.parseGroupOrAtom();
+      const t = Array.isArray(top) ? top : [top];
+      const b = Array.isArray(base) ? base : [base];
+      return this.parseSupSub({ type: "genfrac", mode: this.mode, numerator: t, denominator: b, hasBarLine: false, leftDelim: null, rightDelim: null } as N.ParseNode);
+    }
+    if (name === "xrightarrow" || name === "xleftarrow") {
+      let below: N.Expression | undefined;
+      if (this.peek().type === "text" && this.peek().value === "[") {
+        this.next();
+        below = this.parseExpression(new Set(["]"]));
+        if (this.peek().type === "text" && this.peek().value === "]") this.next();
+      }
+      const above = this.parseGroupOrAtom();
+      const a = Array.isArray(above) ? above : [above];
+      const arrow = name === "xrightarrow" ? "→" : "←";
+      const baseNode: N.ParseNode = { type: "mathord", mode: this.mode, text: arrow };
+      return this.parseSupSub({ type: "supsub", mode: this.mode, base: baseNode, sup: a, sub: below ? (Array.isArray(below) ? below : [below]) : undefined } as N.ParseNode);
+    }
+    if (name === "mathclap" || name === "mathllap" || name === "mathrlap") {
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub(Array.isArray(body) ? (body.length ? body[0]! : { type: "mathord", mode: this.mode, text: "" } as N.ParseNode) : body);
+    }
+    if (name === "substack") {
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "environment", mode: this.mode, envName: "substack", body: [Array.isArray(body) ? body : [body]] } as N.ParseNode);
+    }
+    if (name === "sideset") {
+      // \sideset{_a^b}{_c^d}\sum — skip leading groups
+      while (this.peek().type === "group_open") { this.next(); this.parseExpression(); this.expect("group_close"); }
+      return this.parseUnary();
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);

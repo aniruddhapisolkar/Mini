@@ -7,11 +7,12 @@ import type {
   ModuleDescriptor, SemanticModel, RenderContext, RenderResult, RenderNode,
 } from "../MiniRender/core/interfaces";
 import { register } from "../MiniRender/core/registry";
+import { renderToHTML } from "../MiniMath/index.js";
 
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
 interface Subgraph { id: string; title: string; nodes: string[]; }
-interface DiagramModel extends SemanticModel { kind: "diagram"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; }
+interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; }
 
 function parseNodeToken(tok: string): { id: string; label: string; shape: string } {
   tok = tok.trim();
@@ -32,6 +33,10 @@ function parseNodeToken(tok: string): { id: string; label: string; shape: string
 }
 
 export function parseDiagram(source: string): DiagramModel {
+  const trimmed = source.trim();
+  if (/^sequenceDiagram\b/i.test(trimmed)) {
+    return parseSequenceDiagram(trimmed);
+  }
   const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
   let direction: DiagramModel["direction"] = "TD";
   const nodes = new Map<string, DiagramNode>();
@@ -99,7 +104,35 @@ export function parseDiagram(source: string): DiagramModel {
     n.w = Math.max(60, n.label.length * 8 + 24);
     n.h = 32;
   }
-  return { kind: "diagram", version: 1, direction, nodes: nodeList, edges, subgraphs } as DiagramModel;
+  return { kind: "diagram", version: 1, diagramType: "flowchart", direction, nodes: nodeList, edges, subgraphs } as DiagramModel;
+}
+
+export function parseSequenceDiagram(source: string): DiagramModel {
+  const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const participants: string[] = [];
+  const messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[] = [];
+  const ensureP = (name: string) => { if (!participants.includes(name)) participants.push(name); };
+  for (const line of lines) {
+    if (/^sequenceDiagram/i.test(line)) continue;
+    let m = line.match(/^participant\s+(\S+)(?:\s+as\s+(.+))?$/i);
+    if (m) { ensureP(m[1]!); continue; }
+    m = line.match(/^(\S+?)\s*(-->>?|->>|-->|--x|-x)\s*(\S+?)\s*:\s*(.*)$/);
+    if (m) {
+      const from = m[1]!; const to = m[3]!;
+      const style = m[2]!.includes("--") ? "dashed" : "solid";
+      ensureP(from); ensureP(to);
+      messages.push({ from, to, text: m[4]!.trim(), style });
+      continue;
+    }
+    m = line.match(/^Note\s+(?:over|left of|right of)\s+([^:]+):\s*(.*)$/i);
+    if (m) { /* notes ignored in minimal renderer */ continue; }
+    m = line.match(/^activate\s+(\S+)/i); if (m) { ensureP(m[1]!); continue; }
+    m = line.match(/^deactivate\s+(\S+)/i); if (m) { continue; }
+  }
+  if (participants.length === 0 && messages.length > 0) {
+    // derive from messages
+  }
+  return { kind: "diagram", version: 1, diagramType: "sequence", direction: "TD", nodes: [], edges: [], subgraphs: [], sequence: { participants, messages } } as DiagramModel;
 }
 
 export function layout(model: DiagramModel) {
@@ -161,6 +194,7 @@ export function layout(model: DiagramModel) {
 }
 
 export function renderSVG(model: DiagramModel): string {
+  if (model.diagramType === "sequence") return renderSequenceSVG(model);
   layout(model);
   const nodes = model.nodes;
   const byId = new Map(nodes.map(n => [n.id, n]));
@@ -200,7 +234,48 @@ export function renderSVG(model: DiagramModel): string {
       shapeSvg = `<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="1.5"/>`;
     }
     parts.push(shapeSvg);
-    parts.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="currentColor">${escapeXml(n.label)}</text>`);
+    if (/\$/.test(n.label)) {
+      const mathHtml = renderToHTML(n.label.replace(/\$/g, ""), { displayMode: false });
+      parts.push(`<foreignObject x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"><div xmlns="http://www.w3.org/1999/xhtml" style="display:flex;align-items:center;justify-content:center;height:100%;font-size:12px">${mathHtml}</div></foreignObject>`);
+    } else {
+      parts.push(`<text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="12" fill="currentColor">${escapeXml(n.label)}</text>`);
+    }
+  }
+  parts.push(`</svg>`);
+  return parts.join("");
+}
+
+function renderSequenceSVG(model: DiagramModel): string {
+  const seq = model.sequence!;
+  const participants = seq.participants;
+  const n = participants.length;
+  const colW = 140;
+  const w = Math.max(300, n * colW + 40);
+  const msgH = 40;
+  const top = 60;
+  const h = Math.max(200, top + seq.messages.length * msgH + 60);
+  const parts: string[] = [];
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="mini-diagram mini-sequence">`);
+  // participant boxes + lifelines
+  const xOf = (name: string) => 40 + participants.indexOf(name) * colW + colW / 2;
+  for (let i = 0; i < n; i++) {
+    const x = 40 + i * colW + colW / 2;
+    parts.push(`<rect x="${x-40}" y="10" width="80" height="30" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="1.5"/>`);
+    parts.push(`<text x="${x}" y="30" text-anchor="middle" font-size="12" fill="currentColor">${escapeXml(participants[i]!)}</text>`);
+    parts.push(`<line x1="${x}" y1="40" x2="${x}" y2="${h-10}" stroke="currentColor" stroke-width="1" stroke-dasharray="4,3"/>`);
+  }
+  // messages
+  let y = top;
+  for (const msg of seq.messages) {
+    const x1 = xOf(msg.from), x2 = xOf(msg.to);
+    const dash = msg.style === "dashed" ? "stroke-dasharray:4,3;" : "";
+    const marker = msg.from !== msg.to ? " marker-end=\"url(#arrow)\"" : "";
+    parts.push(`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="currentColor" stroke-width="1.5" style="${dash}"${marker}/>`); 
+    if (msg.text) {
+      const mx = (x1 + x2) / 2;
+      parts.push(`<text x="${mx}" y="${y - 6}" text-anchor="middle" font-size="11" fill="currentColor">${escapeXml(msg.text)}</text>`);
+    }
+    y += msgH;
   }
   parts.push(`</svg>`);
   return parts.join("");
@@ -242,6 +317,12 @@ export const diagramModule: ModuleDescriptor = {
   },
   measure(model: SemanticModel, _ctx: RenderContext, constraints?: MeasureConstraints): MeasureResult {
     const m = model as DiagramModel;
+    if (m.diagramType === "sequence") {
+      const seq = m.sequence!;
+      const w = Math.max(120, seq.participants.length * 140 + 40);
+      const h = Math.max(80, 60 + seq.messages.length * 40 + 60);
+      return { intrinsic: { width: w, height: h }, min: { width: 80, height: 40 }, bbox: { x: 0, y: 0, width: w, height: h } };
+    }
     layout(m);
     let maxX = 0, maxY = 0;
     for (const n of m.nodes) { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); }
