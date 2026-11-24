@@ -132,14 +132,43 @@ export function illustrate(source: string, container: HTMLElement, options?: any
   svg.setAttribute("width", String(w));
   svg.setAttribute("height", String(h));
   svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  svg.setAttribute("class", "mini-math-illustration");
+  const cx = w / 2, cy = h / 2, scale = Math.min(w, h) / 4;
   const axis = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  axis.setAttribute("stroke", "currentColor");
+  axis.setAttribute("stroke", "currentColor"); axis.setAttribute("stroke-width", "1");
   const xline = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  xline.setAttribute("x1", "20"); xline.setAttribute("y1", String(h/2)); xline.setAttribute("x2", String(w-20)); xline.setAttribute("y2", String(h/2));
+  xline.setAttribute("x1", "10"); xline.setAttribute("y1", String(cy)); xline.setAttribute("x2", String(w-10)); xline.setAttribute("y2", String(cy));
   const yline = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  yline.setAttribute("x1", "20"); yline.setAttribute("y1", "20"); yline.setAttribute("x2", "20"); yline.setAttribute("y2", String(h-20));
+  yline.setAttribute("x1", String(cx)); yline.setAttribute("y1", "10"); yline.setAttribute("x2", String(cx)); yline.setAttribute("y2", String(h-10));
   axis.appendChild(xline); axis.appendChild(yline);
   svg.appendChild(axis);
+  const name = (source || "sin").trim().toLowerCase();
+  const fns: Record<string, (x: number) => number> = {
+    sin: (x) => Math.sin(x), cos: (x) => Math.cos(x), tan: (x) => Math.tan(x),
+    "x^2": (x) => x*x, "x^3": (x) => x*x*x, "x": (x) => x,
+    sqrt: (x) => (x >= 0 ? Math.sqrt(x) : NaN),
+    exp: (x) => Math.exp(x), log: (x) => (x > 0 ? Math.log(x) : NaN),
+  };
+  const fn = fns[name] ?? ((x: number) => Math.sin(x));
+  const pts: string[] = [];
+  const n = 200;
+  const xmin = -3, xmax = 3;
+  for (let i = 0; i <= n; i++) {
+    const x = xmin + (xmax - xmin) * i / n;
+    const y = fn(x);
+    if (!isFinite(y)) { pts.push(""); continue; }
+    const px = cx + x * scale / 2;
+    const py = cy - y * scale / 2;
+    pts.push(`${px.toFixed(2)},${py.toFixed(2)}`);
+  }
+  const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  polyline.setAttribute("points", pts.filter(Boolean).join(" "));
+  polyline.setAttribute("fill", "none"); polyline.setAttribute("stroke", "steelblue"); polyline.setAttribute("stroke-width", "2");
+  svg.appendChild(polyline);
+  const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  label.setAttribute("x", "12"); label.setAttribute("y", "20"); label.setAttribute("font-size", "12"); label.setAttribute("fill", "currentColor");
+  label.textContent = name;
+  svg.appendChild(label);
   container.appendChild(svg);
   return { id: "illustration", update() {}, destroy() { svg.remove(); } };
 }
