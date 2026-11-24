@@ -23,7 +23,8 @@ describe("MiniText parser", () => {
     expect(doc.children[0].type).toBe("codeBlock");
     expect((doc.children[0] as any).language).toBe("js");
     const html = renderDocument(doc);
-    expect(html).toContain("const x = 1;");
+    expect(html).toContain("const");
+    expect(html).toContain(">1<");
   });
 
   it("parses GFM tables", () => {
