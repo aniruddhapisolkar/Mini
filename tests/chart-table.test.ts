@@ -23,6 +23,16 @@ describe("MiniChart", () => {
     const model = chartModule.parse({ labels: ["X", "Y"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "pie" });
     expect((model as any).type).toBe("pie");
   });
+
+  it("parses scatter chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B", "C"], datasets: [{ label: "D", data: [1, 5, 3] }] }, { type: "scatter" });
+    expect((model as any).type).toBe("scatter");
+  });
+
+  it("parses radar chart", () => {
+    const model = chartModule.parse({ labels: ["Speed", "Power", "Range"], datasets: [{ label: "D", data: [80, 60, 90] }] }, { type: "radar" });
+    expect((model as any).type).toBe("radar");
+  });
 });
 
 describe("MiniTable", () => {
