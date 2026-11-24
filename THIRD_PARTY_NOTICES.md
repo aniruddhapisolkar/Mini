@@ -37,7 +37,8 @@ All primary reference libraries are MIT licensed. Mini does not bundle them as r
   - Option A: Inline WASM as base64 in standalone bundle (increases size)
   - Option B: Use Prism's regex-based highlighting (no WASM) as default; Oniguruma as optional capability
   - Option C: Vendor a pure-JS regex subset for common languages
-- **Current decision**: Option B (Prism-based default) as primary; Oniguruma as optional capability (Option C for full standalone).
+  - Option D (NEW): Use Shiki's JavaScript RegExp Engine (`createJavaScriptRegexEngine`) — transpiles Oniguruma patterns to native JS regex via Oniguruma-To-ES. No WASM required. All built-in languages supported as of Shiki 3.9.1. Bundle size ~123 kB (vs 263 kB WASM). Slightly lower throughput than WASM but acceptable for browser/offline use.
+- **Current decision**: Option D recommended as primary for standalone HTML (no WASM, full TextMate grammar compatibility, smaller bundle). Option B (Prism) as lightweight fallback for minimal builds. Oniguruma WASM retained as optional for maximum compatibility.
 
 ### D3 Submodules (used by Recharts)
 - **Status**: Pending verification
