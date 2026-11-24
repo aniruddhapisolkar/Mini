@@ -19,6 +19,9 @@ describe("CommonMark sanity", () => {
     ["a | b\n---|---\n1 | 2", ["<table", "<th", "<td"]],
     ["~~del~~", ["<del>del</del>"]],
     ["- [x] done", ['type="checkbox"']],
+    ["foo\nbar", ["foo", "bar"]],
+    ["# a\n# b", ["<h1", "</h1>"]],
+    ["[a](/u \"t\")", ['title="t"']],
   ];
   for (const [input, expected] of cases) {
     it(`renders: ${input.replace(/\n/g, "\\n").slice(0, 40)}`, () => {
