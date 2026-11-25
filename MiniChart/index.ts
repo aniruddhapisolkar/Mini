@@ -12,7 +12,7 @@ import { register } from "../MiniRender/core/registry";
 
 // ---- Chart data model ----
 
-type ChartType = "line" | "bar" | "area" | "scatter" | "pie" | "doughnut" | "radar" | "bubble" | "mixed";
+type ChartType = "line" | "bar" | "bar-horizontal" | "area" | "scatter" | "pie" | "doughnut" | "radar" | "bubble" | "mixed";
 
 interface ChartDataset {
   label: string;
@@ -121,7 +121,7 @@ export const chartModule: ModuleDescriptor = {
     const allValues = m.datasets.flatMap(d => d.data);
     const maxVal = maxAbs(allValues) || 1;
 
-    if (m.type === "bar" || m.type === "line" || m.type === "area") {
+    if (m.type === "bar" || m.type === "bar-horizontal" || m.type === "line" || m.type === "area") {
       // Cartesian chart
       const barCount = m.labels.length || 1;
       const groupW = plotW / barCount;
@@ -215,6 +215,26 @@ export const chartModule: ModuleDescriptor = {
             rect.setAttribute("y", String(y));
             rect.setAttribute("width", String(barW));
             rect.setAttribute("height", String(h));
+            rect.setAttribute("fill", ds.color ?? resolveColor(di));
+            rect.setAttribute("data-value", String(val));
+            svg.appendChild(rect);
+          });
+        });
+      }
+
+      // Horizontal bars
+      if (m.type === "bar-horizontal") {
+        const barH = groupW * 0.6;
+        m.datasets.forEach((ds, di) => {
+          ds.data.forEach((val, i) => {
+            const y = padding.top + groupW * i + (groupW - barH) / 2;
+            const w = (Math.abs(val) / maxVal) * plotW;
+            const x = padding.left;
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", String(x));
+            rect.setAttribute("y", String(y));
+            rect.setAttribute("width", String(w));
+            rect.setAttribute("height", String(barH));
             rect.setAttribute("fill", ds.color ?? resolveColor(di));
             rect.setAttribute("data-value", String(val));
             svg.appendChild(rect);
