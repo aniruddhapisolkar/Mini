@@ -46,6 +46,7 @@ interface TableModel extends SemanticModel {
   footerCells: Record<string, string>;
   aggregation: Record<string, "sum" | "avg" | "count" | "min" | "max">;
   highlightFilter: boolean;
+  columnVisibility: Record<string, boolean>;
 }
 
 // ---- Helpers ----
@@ -81,7 +82,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean; columnVisibility?: Record<string, boolean> };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -110,6 +111,7 @@ export const tableModule: ModuleDescriptor = {
       footerCells: opts.footerCells ?? {},
       aggregation: opts.aggregation ?? {},
       highlightFilter: opts.highlightFilter ?? false,
+      columnVisibility: opts.columnVisibility ?? {},
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -162,7 +164,7 @@ export const tableModule: ModuleDescriptor = {
       headerRow.appendChild(th);
     }
 
-    m.columns.forEach(col => {
+    m.columns.filter(col => m.columnVisibility[col.id] !== false).forEach(col => {
       const th = document.createElement("th");
       th.textContent = col.header;
       th.style.padding = "8px";
@@ -317,7 +319,7 @@ export const tableModule: ModuleDescriptor = {
           td.appendChild(cb);
           tr.appendChild(td);
         }
-        m.columns.forEach(col => {
+        m.columns.filter(col => m.columnVisibility[col.id] !== false).forEach(col => {
           const td = document.createElement("td");
           const val = String(row.cells[col.id] ?? "");
           if (m.highlightFilter && m.filter) {
