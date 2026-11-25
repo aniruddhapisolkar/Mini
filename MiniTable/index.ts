@@ -47,6 +47,7 @@ interface TableModel extends SemanticModel {
   aggregation: Record<string, "sum" | "avg" | "count" | "min" | "max">;
   highlightFilter: boolean;
   columnVisibility: Record<string, boolean>;
+  columnOrder: string[];
 }
 
 // ---- Helpers ----
@@ -82,7 +83,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean; columnVisibility?: Record<string, boolean> };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean; columnVisibility?: Record<string, boolean>; columnOrder?: string[] };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -112,6 +113,7 @@ export const tableModule: ModuleDescriptor = {
       aggregation: opts.aggregation ?? {},
       highlightFilter: opts.highlightFilter ?? false,
       columnVisibility: opts.columnVisibility ?? {},
+      columnOrder: opts.columnOrder ?? [],
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -123,6 +125,12 @@ export const tableModule: ModuleDescriptor = {
     container.style.setProperty("--mini-table-bg", "var(--mini-bg, #fff)");
     container.style.setProperty("--mini-table-text", "var(--mini-text, #333)");
     container.style.setProperty("--mini-table-border", "var(--mini-border, #ccc)");
+
+    // Ordered and visible columns
+    const orderedCols = m.columnOrder.length > 0
+      ? m.columnOrder.map(id => m.columns.find(c => c.id === id)).filter(Boolean) as TableColumn[]
+      : m.columns;
+    const visibleCols = orderedCols.filter(col => m.columnVisibility[col.id] !== false);
 
     // Filter input
     const filterInput = document.createElement("input");
@@ -164,7 +172,7 @@ export const tableModule: ModuleDescriptor = {
       headerRow.appendChild(th);
     }
 
-    m.columns.filter(col => m.columnVisibility[col.id] !== false).forEach(col => {
+    visibleCols.forEach(col => {
       const th = document.createElement("th");
       th.textContent = col.header;
       th.style.padding = "8px";
@@ -254,7 +262,7 @@ export const tableModule: ModuleDescriptor = {
       const spacerTd = document.createElement("td");
       spacerTd.style.height = `${offsetY}px`;
       spacerTd.style.padding = "0";
-      spacerTd.colSpan = m.columns.length;
+      spacerTd.colSpan = visibleCols.length;
       spacerTop.appendChild(spacerTd);
       tbody.appendChild(spacerTop);
 
@@ -319,7 +327,7 @@ export const tableModule: ModuleDescriptor = {
           td.appendChild(cb);
           tr.appendChild(td);
         }
-        m.columns.filter(col => m.columnVisibility[col.id] !== false).forEach(col => {
+        visibleCols.forEach(col => {
           const td = document.createElement("td");
           const val = String(row.cells[col.id] ?? "");
           if (m.highlightFilter && m.filter) {
@@ -351,7 +359,7 @@ export const tableModule: ModuleDescriptor = {
         const td = document.createElement("td");
         footerRow.appendChild(td);
       }
-      m.columns.forEach(col => {
+      visibleCols.forEach(col => {
         const td = document.createElement("td");
         let text = m.footerCells[col.id] ?? "";
         const agg = m.aggregation[col.id];
@@ -435,7 +443,10 @@ export const tableModule: ModuleDescriptor = {
     const rowH = 32;
     const headerH = 36;
     const rows = Math.min(m.rows.length, m.pageSize);
-    const w = m.columns.reduce((sum, c) => sum + (c.width ?? 120), 0);
+    const visibleCols = m.columnOrder.length > 0
+      ? m.columnOrder.map(id => m.columns.find(c => c.id === id)).filter(Boolean) as TableColumn[]
+      : m.columns;
+    const w = visibleCols.filter(col => m.columnVisibility[col.id] !== false).reduce((sum, c) => sum + (c.width ?? 120), 0);
     const h = headerH + rows * rowH + 40; // 40 for pagination
     return { intrinsic: { width: w, height: h }, min: { width: 200, height: 80 }, bbox: { x: 0, y: 0, width: w, height: h } };
   },
