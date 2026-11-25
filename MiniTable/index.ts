@@ -282,57 +282,61 @@ export const tableModule: ModuleDescriptor = {
       container.style.maxHeight = `${m.viewportHeight}px`;
       container.style.overflow = "auto";
 
-      // Add scroll handler for dynamic rendering
+      // Add scroll handler for dynamic rendering with requestAnimationFrame
+      let rafId = 0;
       container.addEventListener("scroll", () => {
-        const newScrollTop = container.scrollTop;
-        if (Math.abs(newScrollTop - scrollTop) > m.rowHeight) {
-          scrollTop = newScrollTop;
-          // Re-render visible rows
-          const tbody = table.querySelector("tbody");
-          if (tbody) {
-            tbody.innerHTML = "";
-            const newStartIndex = Math.floor(scrollTop / m.rowHeight);
-            const newEndIndex = Math.min(newStartIndex + visibleCount, sorted.length);
-            const newOffsetY = newStartIndex * m.rowHeight;
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          const newScrollTop = container.scrollTop;
+          if (Math.abs(newScrollTop - scrollTop) > m.rowHeight) {
+            scrollTop = newScrollTop;
+            // Re-render visible rows
+            const tbody = table.querySelector("tbody");
+            if (tbody) {
+              tbody.innerHTML = "";
+              const newStartIndex = Math.floor(scrollTop / m.rowHeight);
+              const newEndIndex = Math.min(newStartIndex + visibleCount, sorted.length);
+              const newOffsetY = newStartIndex * m.rowHeight;
 
-            // Spacer top
-            const spacerTop = document.createElement("tr");
-            const spacerTd = document.createElement("td");
-            spacerTd.style.height = `${newOffsetY}px`;
-            spacerTd.style.padding = "0";
-            spacerTd.colSpan = visibleCols.length + (m.selectable ? 1 : 0) + (m.expandable ? 1 : 0);
-            spacerTop.appendChild(spacerTd);
-            tbody.appendChild(spacerTop);
+              // Spacer top
+              const spacerTop = document.createElement("tr");
+              const spacerTd = document.createElement("td");
+              spacerTd.style.height = `${newOffsetY}px`;
+              spacerTd.style.padding = "0";
+              spacerTd.colSpan = visibleCols.length + (m.selectable ? 1 : 0) + (m.expandable ? 1 : 0);
+              spacerTop.appendChild(spacerTd);
+              tbody.appendChild(spacerTop);
 
-            for (let i = newStartIndex; i < newEndIndex; i++) {
-              const row = sorted[i];
-              if (!row) continue;
-              const tr = document.createElement("tr");
-              tr.style.height = `${m.rowHeight}px`;
-              if (m.striped && i % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
-              visibleCols.forEach(col => {
-                const td = document.createElement("td");
-                td.textContent = String(row.cells[col.id] ?? "");
-                td.style.padding = "8px";
-                td.style.borderBottom = "1px solid #eee";
-                tr.appendChild(td);
-              });
-              tbody.appendChild(tr);
-            }
+              for (let i = newStartIndex; i < newEndIndex; i++) {
+                const row = sorted[i];
+                if (!row) continue;
+                const tr = document.createElement("tr");
+                tr.style.height = `${m.rowHeight}px`;
+                if (m.striped && i % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
+                visibleCols.forEach(col => {
+                  const td = document.createElement("td");
+                  td.textContent = String(row.cells[col.id] ?? "");
+                  td.style.padding = "8px";
+                  td.style.borderBottom = "1px solid #eee";
+                  tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+              }
 
-            // Spacer bottom
-            const remaining = sorted.length - newEndIndex;
-            if (remaining > 0) {
-              const spacerBottom = document.createElement("tr");
-              const spacerBtd = document.createElement("td");
-              spacerBtd.style.height = `${remaining * m.rowHeight}px`;
-              spacerBtd.style.padding = "0";
-              spacerBtd.colSpan = visibleCols.length + (m.selectable ? 1 : 0) + (m.expandable ? 1 : 0);
-              spacerBottom.appendChild(spacerBtd);
-              tbody.appendChild(spacerBottom);
+              // Spacer bottom
+              const remaining = sorted.length - newEndIndex;
+              if (remaining > 0) {
+                const spacerBottom = document.createElement("tr");
+                const spacerBtd = document.createElement("td");
+                spacerBtd.style.height = `${remaining * m.rowHeight}px`;
+                spacerBtd.style.padding = "0";
+                spacerBtd.colSpan = visibleCols.length + (m.selectable ? 1 : 0) + (m.expandable ? 1 : 0);
+                spacerBottom.appendChild(spacerBtd);
+                tbody.appendChild(spacerBottom);
+              }
             }
           }
-        }
+        });
       });
 
       // Spacer for scroll position
