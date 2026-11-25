@@ -44,6 +44,7 @@ interface TableModel extends SemanticModel {
   resizable: boolean;
   showFooter: boolean;
   footerCells: Record<string, string>;
+  aggregation: Record<string, "sum" | "avg" | "count" | "min" | "max">;
 }
 
 // ---- Helpers ----
@@ -79,7 +80,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string> };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max"> };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -106,6 +107,7 @@ export const tableModule: ModuleDescriptor = {
       resizable: opts.resizable ?? false,
       showFooter: opts.showFooter ?? false,
       footerCells: opts.footerCells ?? {},
+      aggregation: opts.aggregation ?? {},
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -327,7 +329,17 @@ export const tableModule: ModuleDescriptor = {
       }
       m.columns.forEach(col => {
         const td = document.createElement("td");
-        td.textContent = String(m.footerCells[col.id] ?? "");
+        let text = m.footerCells[col.id] ?? "";
+        const agg = m.aggregation[col.id];
+        if (agg) {
+          const values = sorted.map(r => r.cells[col.id]).filter(v => typeof v === "number") as number[];
+          if (agg === "sum") text = String(values.reduce((a, b) => a + b, 0));
+          else if (agg === "avg") text = values.length ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1) : "0";
+          else if (agg === "count") text = String(sorted.length);
+          else if (agg === "min") text = values.length ? String(Math.min(...values)) : "";
+          else if (agg === "max") text = values.length ? String(Math.max(...values)) : "";
+        }
+        td.textContent = text;
         td.style.padding = "8px";
         td.style.fontWeight = "bold";
         td.style.borderTop = "2px solid #ccc";
