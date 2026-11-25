@@ -229,6 +229,22 @@ export function parseInlines(text: string, opts: Required<ParseOptions> = DEFAUL
       // determine run length
       let runLen = 0;
       while (i + runLen < n && text[i + runLen] === ch) runLen++;
+      // flanking checks
+      const prev = i > 0 ? text[i - 1]! : "";
+      const next = i + runLen < n ? text[i + runLen]! : "";
+      const isWhitespace = (c: string) => c === "" || /\\s/.test(c);
+      const isPunct = (c: string) => c !== "" && !/\\s/.test(c) && !/[A-Za-z0-9]/.test(c);
+      const leftFlanking = !isWhitespace(next) && (isPunct(next) === false || isWhitespace(prev) || isPunct(prev));
+      // for _ : opening requires preceded by whitespace/punctuation/start (not word char)
+      const canOpen = ch === "*"
+        ? leftFlanking
+        : leftFlanking && (prev === "" || isWhitespace(prev) || isPunct(prev));
+      if (!canOpen) {
+        // not an opener; fall through (treat as text)
+        buf += ch;
+        i++;
+        continue;
+      }
       // try triple (strong+emphasis) first
       if (runLen >= 3) {
         const delim = ch.repeat(3);
@@ -347,8 +363,21 @@ function parseDelimited(
   let depth = 0;
   while (i < n) {
     if (text.startsWith(delim, i)) {
-      // ensure not followed by space? closing must not be preceded by space
+      // ensure not preceded by space
       if (i > start + delim.length && /\s/.test(text[i - 1]!)) {
+        i++;
+        continue;
+      }
+      // right-flanking check for closing
+      const ch = delim[0];
+      const afterClose = i + delim.length < n ? text[i + delim.length]! : "";
+      const isWs = (c: string) => c === "" || /\s/.test(c);
+      const isPunct = (c: string) => c !== "" && !/\s/.test(c) && !/[A-Za-z0-9]/.test(c);
+      const rightFlanking = !isWs(text[i - 1]!) && (isPunct(text[i - 1]!) === false || isWs(afterClose) || isPunct(afterClose));
+      const canClose = ch === "*"
+        ? rightFlanking
+        : rightFlanking && (afterClose === "" || isWs(afterClose) || isPunct(afterClose));
+      if (!canClose) {
         i++;
         continue;
       }
