@@ -209,9 +209,9 @@ export const tableModule: ModuleDescriptor = {
             m.sortColumn = col.id;
             m.sortDirection = "asc";
           }
-          // Re-render (simplified)
+          // Re-render with sorted data
           container.innerHTML = "";
-          const newResult = tableModule.render(m, ctx);
+          tableModule.render(m, ctx);
         });
       }
       // Resize handle
