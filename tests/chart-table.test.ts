@@ -72,6 +72,17 @@ describe("MiniChart", () => {
     }
   });
 
+  it("measures all chart types", () => {
+    const types = ["bar", "bar-horizontal", "line", "area", "scatter", "pie", "doughnut", "radar", "bubble", "mixed"] as const;
+    const ctx = { container: { element: {} } } as any;
+    for (const t of types) {
+      const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [1, 2] }] }, { type: t, width: 200, height: 150 });
+      const result = chartModule.measure(model, ctx);
+      expect(result.intrinsic.width).toBe(200);
+      expect(result.intrinsic.height).toBe(150);
+    }
+  });
+
   it("parses area chart", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "area" });
     expect((model as any).type).toBe("area");
