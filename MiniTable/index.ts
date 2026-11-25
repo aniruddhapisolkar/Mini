@@ -208,6 +208,14 @@ export const tableModule: ModuleDescriptor = {
         });
         th.appendChild(handle);
       }
+      // Sort indicator
+      if (m.sortColumn === col.id) {
+        const indicator = document.createElement("span");
+        indicator.textContent = m.sortDirection === "asc" ? " ▲" : " ▼";
+        indicator.style.fontSize = "10px";
+        th.appendChild(indicator);
+      }
+
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow);
