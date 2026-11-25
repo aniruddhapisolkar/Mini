@@ -607,7 +607,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
     }
 
     // list
-    const listMatch = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
+    const listMatch = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/);
     if (listMatch) {
       const { items, newI } = parseList(lines, opts, refs, i, end);
       blocks.push(items);
@@ -702,7 +702,7 @@ function isBlockStart(line: string): boolean {
 // ---------- list parsing ----------
 
 function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<string, LinkReference>, start: number, end: number): { items: BlockNode; newI: number } {
-  const firstMatch = lines[start]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/)!;
+  const firstMatch = lines[start]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/)!;
   const marker = firstMatch[1]!;
   const ordered = /\d/.test(marker);
   const startNum = ordered ? parseInt(marker, 10) : 1;
@@ -717,7 +717,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
   while (i < end) {
     if (isBlank(lines[i]!)) {
       if (i + 1 < end) {
-        const nm = lines[i + 1]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
+        const nm = lines[i + 1]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/);
         if (nm) {
           const nMarker = nm[1]!;
           const nOrdered = /\d/.test(nMarker);
@@ -730,7 +730,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
       }
       break;
     }
-    const m = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
+    const m = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/);
     if (!m) break;
     // same list type?
     const mMarker = m[1]!;
@@ -776,7 +776,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
     // gather lines for this item
     const itemLines: string[] = [];
     // first line: strip marker
-    const firstLine = lines[s]!.replace(/^ {0,3}([-+*]|\d{1,9}[.)])\s/, "");
+    const firstLine = lines[s]!.replace(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]{1,4}/, "");
     itemLines.push(firstLine);
     for (let j = s + 1; j < e; j++) {
       if (isBlank(lines[j]!)) { itemLines.push(""); continue; }
