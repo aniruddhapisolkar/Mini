@@ -340,7 +340,7 @@ export class Parser {
     }
 
     // \operatorname
-    if (name === "operatorname" || name === "operatorname*") {
+    if (name === "operatorname" || name === "operatorname*" || name === "DeclareMathOperator" || name === "DeclareMathOperator*") {
       let txt = "";
       if (this.peek().type === "group_open") {
         this.next();
