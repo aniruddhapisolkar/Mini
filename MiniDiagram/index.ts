@@ -12,7 +12,7 @@ import { renderToHTML } from "../MiniMath/index.js";
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
 interface Subgraph { id: string; title: string; nodes: string[]; }
-interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap" | "pie" | "gantt" | "state" | "er"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; pie?: { title: string; slices: { label: string; value: number }[]; }; gantt?: { title: string; tasks: { name: string; id: string; start: number; duration: number }[]; }; er?: { entities: string[]; relations: { from: string; to: string; label: string; cardinality: string }[]; }; }
+interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap" | "pie" | "gantt" | "state" | "er" | "class"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; pie?: { title: string; slices: { label: string; value: number }[]; }; gantt?: { title: string; tasks: { name: string; id: string; start: number; duration: number }[]; }; er?: { entities: string[]; relations: { from: string; to: string; label: string; cardinality: string }[]; }; classd?: { classes: { name: string; members: string[] }[]; relations: { from: string; to: string; type: string }[]; }; }
 
 function parseNodeToken(tok: string): { id: string; label: string; shape: string } {
   tok = tok.trim();
@@ -44,6 +44,9 @@ export function parseDiagram(source: string): DiagramModel {
       if (n.label === "[*]" || n.id === "[*]") { n.shape = "circle"; n.label = ""; n.w = 20; n.h = 20; }
     }
     return m;
+  }
+  if (/^classDiagram\b/i.test(trimmed)) {
+    return parseClassDiagram(trimmed);
   }
   if (/^erDiagram\b/i.test(trimmed)) {
     return parseErDiagram(trimmed);
@@ -228,6 +231,29 @@ export function parseErDiagram(source: string): DiagramModel {
   return { kind: "diagram", version: 1, diagramType: "er", direction: "TD", layout: "layered", nodes: nodeList, edges, subgraphs: [], er: { entities: Array.from(entities), relations } } as any;
 }
 
+export function parseClassDiagram(source: string): DiagramModel {
+  const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const classes = new Map<string, string[]>();
+  const relations: { from: string; to: string; type: string }[] = [];
+  let current: string | null = null;
+  for (const line of lines) {
+    if (/^classDiagram\b/i.test(line)) continue;
+    const cm = line.match(/^class\s+(\w+)\s*\{?$/); if (cm) { if (!classes.has(cm[1]!)) classes.set(cm[1]!, []); current = cm[1]!; continue; }
+    if (line === "}") { current = null; continue; }
+    if (current && line !== "}") { classes.get(current)!.push(line); continue; }
+    const rm = line.match(/^(\w+)\s*(<\|--|--\*>|\*--|o--|--|\.\.>|<\.\.)\s*(\w+)$/);
+    if (rm) { relations.push({ from: rm[1]!, to: rm[3]!, type: rm[2]! }); if (!classes.has(rm[1]!)) classes.set(rm[1]!, []); if (!classes.has(rm[3]!)) classes.set(rm[3]!, []); continue; }
+    const mm = line.match(/^(\w+)\s*:\s*(.+)$/); if (mm && classes.has(mm[1]!)) { classes.get(mm[1]!)!.push(mm[2]!); continue; }
+  }
+  const nodes = Array.from(classes.keys()).map((name) => {
+    const members = classes.get(name)!;
+    const h = 24 + members.length * 14;
+    return { id: name, label: name, shape: "rect", x: 0, y: 0, w: Math.max(100, name.length*8+40), h };
+  });
+  const edges: DiagramEdge[] = relations.map(r => ({ from: r.from, to: r.to, label: r.type, style: "solid" as const, arrow: true }));
+  return { kind: "diagram", version: 1, diagramType: "class", direction: "TD", layout: "layered", nodes, edges, subgraphs: [], classd: { classes: Array.from(classes.entries()).map(([name, members]) => ({ name, members })), relations } } as any;
+}
+
 export function parseSequenceDiagram(source: string): DiagramModel {
   const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
   const participants: string[] = [];
@@ -323,6 +349,7 @@ export function renderSVG(model: DiagramModel): string {
   if (model.diagramType === "pie") return renderPieSVG(model);
   if (model.diagramType === "gantt") return renderGanttSVG(model);
   if (model.diagramType === "er") return renderErSVG(model);
+  if (model.diagramType === "class") return renderClassSVG(model);
   layout(model);
   const nodes = model.nodes;
   const byId = new Map(nodes.map(n => [n.id, n]));
@@ -491,6 +518,38 @@ function renderErSVG(model: any): string {
   return parts.join("");
 }
 
+function renderClassSVG(model: any): string {
+  const cd = model.classd;
+  const nodes = model.nodes;
+  const byId = new Map(nodes.map((n: any) => [n.id, n]));
+  layout(model);
+  let maxX = 0, maxY = 0;
+  for (const n of nodes) { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); }
+  const w = Math.max(200, maxX + 40);
+  const h = Math.max(120, maxY + 40);
+  const parts: string[] = [];
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="mini-diagram mini-class">`);
+  for (const e of model.edges) {
+    const a = byId.get(e.from) as any, b = byId.get(e.to) as any;
+    if (!a || !b) continue;
+    const ax = a.x + a.w/2, ay = a.y + a.h/2;
+    const bx = b.x + b.w/2, by = b.y + b.h/2;
+    parts.push(`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>`);
+  }
+  for (const cls of cd.classes) {
+    const n = byId.get(cls.name) as any;
+    if (!n) continue;
+    parts.push(`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="1.5"/>`);
+    parts.push(`<text x="${n.x + n.w/2}" y="${n.y + 14}" text-anchor="middle" font-size="12" font-weight="bold" fill="currentColor">${escapeXml(cls.name)}</text>`);
+    parts.push(`<line x1="${n.x}" y1="${n.y + 20}" x2="${n.x + n.w}" y2="${n.y + 20}" stroke="currentColor" stroke-width="1"/>`);
+    cls.members.forEach((mem: string, i: number) => {
+      parts.push(`<text x="${n.x + 6}" y="${n.y + 34 + i*14}" font-size="10" fill="currentColor">${escapeXml(mem)}</text>`);
+    });
+  }
+  parts.push(`</svg>`);
+  return parts.join("");
+}
+
 function escapeXml(s: string): string { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
 export const diagramModule: ModuleDescriptor = {
@@ -527,6 +586,14 @@ export const diagramModule: ModuleDescriptor = {
   },
   measure(model: SemanticModel, _ctx: RenderContext, constraints?: MeasureConstraints): MeasureResult {
     const m = model as DiagramModel;
+    if (m.diagramType === "class") {
+      layout(m);
+      let maxX = 0, maxY = 0;
+      for (const n of m.nodes) { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); }
+      const w = Math.max(200, maxX + 40);
+      const h = Math.max(120, maxY + 40);
+      return { intrinsic: { width: w, height: h }, min: { width: 120, height: 60 }, bbox: { x: 0, y: 0, width: w, height: h } };
+    }
     if (m.diagramType === "er") {
       layout(m);
       let maxX = 0, maxY = 0;
