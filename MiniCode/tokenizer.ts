@@ -38,15 +38,20 @@ function builtins(names: string[]): [TokenScope, RegExp][] {
 const JS_KEYWORDS = ["const","let","var","function","return","if","else","for","while","do","switch","case","break","continue","class","extends","implements","import","export","from","default","new","this","super","true","false","null","undefined","void","typeof","instanceof","in","of","try","catch","finally","throw","async","await","yield","static","get","set","public","private","protected","readonly","interface","type","enum","namespace","abstract","as","is","keyof","infer","never","unknown","any","number","string","boolean","symbol","bigint","object","declare","module","require","export"];
 const JS_OPERATORS = /[+\-*/%=<>!&|^~?:]+/;
 
-const grammars: Record<string, LanguageGrammar> = {};
+type GrammarFactory = () => LanguageGrammar;
+const grammars: Record<string, LanguageGrammar | GrammarFactory> = {};
 
-function reg(g: LanguageGrammar) {
-  grammars[g.id] = g;
-  for (const a of g.aliases || []) grammars[a] = g;
+function reg(g: LanguageGrammar | GrammarFactory) {
+  // Accept either a grammar or a factory; store factory for lazy construction.
+  const factory: GrammarFactory = typeof g === "function" ? (g as GrammarFactory) : () => g as LanguageGrammar;
+  // We need the id to key it; construct once to get id, then store factory.
+  const instance = factory();
+  grammars[instance.id] = factory;
+  for (const a of instance.aliases || []) grammars[a] = factory;
 }
 
 // JavaScript / TypeScript
-reg(makeGrammar("javascript", [
+reg(() => makeGrammar("javascript", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ["regexp", /\/(?:\\.|[^\/\\\n])+(?:\/[gimsuy]*)/],
@@ -57,7 +62,7 @@ reg(makeGrammar("javascript", [
   ["punctuation", /[{}()\[\];,.]/],
 ], ["js", "jsx"]));
 
-reg(makeGrammar("typescript", [
+reg(() => makeGrammar("typescript", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ["regexp", /\/(?:\\.|[^\/\\\n])+(?:\/[gimsuy]*)/],
@@ -70,7 +75,7 @@ reg(makeGrammar("typescript", [
 ], ["ts", "tsx"]));
 
 // Python
-reg(makeGrammar("python", [
+reg(() => makeGrammar("python", [
   ...HASH_COMMENTS,
   ["string", /"""[\s\S]*?"""/],
   ["string", /'''[\s\S]*?'''/],
@@ -83,7 +88,7 @@ reg(makeGrammar("python", [
 ], ["py"]));
 
 // Java
-reg(makeGrammar("java", [
+reg(() => makeGrammar("java", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -95,7 +100,7 @@ reg(makeGrammar("java", [
 ], []));
 
 // C / C++
-reg(makeGrammar("c", [
+reg(() => makeGrammar("c", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -104,7 +109,7 @@ reg(makeGrammar("c", [
   ["operator", /[+\-*/%=<>!&|^~?:]+/],
   ["punctuation", /[{}()\[\];,.]/],
 ], []));
-reg(makeGrammar("cpp", [
+reg(() => makeGrammar("cpp", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -116,7 +121,7 @@ reg(makeGrammar("cpp", [
 ], ["c++", "cc", "cxx"]));
 
 // Rust
-reg(makeGrammar("rust", [
+reg(() => makeGrammar("rust", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -129,7 +134,7 @@ reg(makeGrammar("rust", [
 ], ["rs"]));
 
 // Go
-reg(makeGrammar("go", [
+reg(() => makeGrammar("go", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ["string", /`[^`]*`/],
@@ -142,7 +147,7 @@ reg(makeGrammar("go", [
 ], ["golang"]));
 
 // Ruby
-reg(makeGrammar("ruby", [
+reg(() => makeGrammar("ruby", [
   ...HASH_COMMENTS,
   ["string", /"(?:\\.|[^"\\])*"/],
   ["string", /'(?:\\.|[^'\\])*'/],
@@ -155,7 +160,7 @@ reg(makeGrammar("ruby", [
 ], ["rb"]));
 
 // PHP
-reg(makeGrammar("php", [
+reg(() => makeGrammar("php", [
   ...HASH_COMMENTS,
   ["comment", /\/\/[^\n]*/],
   ["comment", /\/\*[\s\S]*?\*\//],
@@ -169,7 +174,7 @@ reg(makeGrammar("php", [
 ], []));
 
 // SQL
-reg(makeGrammar("sql", [
+reg(() => makeGrammar("sql", [
   ["comment", /--[^\n]*/],
   ["comment", /\/\*[\s\S]*?\*\//],
   ...STRINGS_SINGLE_QUOTE(),
@@ -185,7 +190,7 @@ function STRINGS_SINGLE_QUOTE(): [TokenScope, RegExp][] {
 }
 
 // JSON
-reg(makeGrammar("json", [
+reg(() => makeGrammar("json", [
   ["string", /"(?:\\.|[^"\\])*"/],
   ...NUMBERS,
   ["keyword", /\b(?:true|false|null)\b/],
@@ -193,7 +198,7 @@ reg(makeGrammar("json", [
 ], []));
 
 // YAML
-reg(makeGrammar("yaml", [
+reg(() => makeGrammar("yaml", [
   ...HASH_COMMENTS,
   ["string", /"(?:\\.|[^"\\])*"/],
   ["string", /'(?:\\.|[^'\\])*'/],
@@ -204,7 +209,7 @@ reg(makeGrammar("yaml", [
 ], ["yml"]));
 
 // TOML
-reg(makeGrammar("toml", [
+reg(() => makeGrammar("toml", [
   ...HASH_COMMENTS,
   ["string", /"(?:\\.|[^"\\])*"/],
   ["string", /'(?:\\.|[^'\\])*'/],
@@ -216,7 +221,7 @@ reg(makeGrammar("toml", [
 ], []));
 
 // XML / HTML
-reg(makeGrammar("xml", [
+reg(() => makeGrammar("xml", [
   ["comment", /<!--[\s\S]*?-->/],
   ["string", /"(?:\\.|[^"\\])*"/],
   ["string", /'(?:\\.|[^'\\])*'/],
@@ -226,7 +231,7 @@ reg(makeGrammar("xml", [
 ], ["html"]));
 
 // CSS
-reg(makeGrammar("css", [
+reg(() => makeGrammar("css", [
   ["comment", /\/\*[\s\S]*?\*\//],
   ["string", /"(?:\\.|[^"\\])*"/],
   ["string", /'(?:\\.|[^'\\])*'/],
@@ -239,7 +244,7 @@ reg(makeGrammar("css", [
 ], []));
 
 // Shell
-reg(makeGrammar("shell", [
+reg(() => makeGrammar("shell", [
   ...HASH_COMMENTS,
   ["string", /"(?:\\.|[^"\\])*"/],
   ["string", /'(?:\\.|[^'\\])*'/],
@@ -252,7 +257,7 @@ reg(makeGrammar("shell", [
 ], ["bash", "sh", "zsh"]));
 
 // Markdown (delegates-ish)
-reg(makeGrammar("markdown", [
+reg(() => makeGrammar("markdown", [
   ["comment", /^#{1,6}\s.*$/m],
   ["string", /`[^`]*`/],
   ["keyword", /\*\*[^*]+\*\*/],
@@ -260,7 +265,7 @@ reg(makeGrammar("markdown", [
 ], ["md"]));
 
 // Dockerfile
-reg(makeGrammar("dockerfile", [
+reg(() => makeGrammar("dockerfile", [
   ...HASH_COMMENTS,
   ["keyword", /^(?:FROM|RUN|CMD|LABEL|EXPOSE|ENV|ADD|COPY|ENTRYPOINT|VOLUME|USER|WORKDIR|ARG|ONBUILD|STOPSIGNAL|HEALTHCHECK|SHELL)\b/m],
   ["string", /"(?:\\.|[^"\\])*"/],
@@ -268,7 +273,7 @@ reg(makeGrammar("dockerfile", [
 ], ["docker"]));
 
 // Kotlin
-reg(makeGrammar("kotlin", [
+reg(() => makeGrammar("kotlin", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -280,7 +285,7 @@ reg(makeGrammar("kotlin", [
 ], ["kt", "kts"]));
 
 // Swift
-reg(makeGrammar("swift", [
+reg(() => makeGrammar("swift", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -292,7 +297,7 @@ reg(makeGrammar("swift", [
 ], ["swift"]));
 
 // Scala
-reg(makeGrammar("scala", [
+reg(() => makeGrammar("scala", [
   ...C_STYLE_COMMENTS,
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -304,7 +309,7 @@ reg(makeGrammar("scala", [
 ], ["scala"]));
 
 // Haskell
-reg(makeGrammar("haskell", [
+reg(() => makeGrammar("haskell", [
   ...HASH_COMMENTS,
   ["comment", /\{-[\s\S]*?-\}/],
   ...STRINGS_DOUBLE,
@@ -317,7 +322,7 @@ reg(makeGrammar("haskell", [
 ], ["hs"]));
 
 // Lua
-reg(makeGrammar("lua", [
+reg(() => makeGrammar("lua", [
   ...HASH_COMMENTS,
   ["comment", /--\[\[[\s\S]*?\]\]/],
   ...STRINGS_DOUBLE,
@@ -329,7 +334,7 @@ reg(makeGrammar("lua", [
 ], ["lua"]));
 
 // Perl
-reg(makeGrammar("perl", [
+reg(() => makeGrammar("perl", [
   ["comment", /#[^\n]*/],
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -341,7 +346,7 @@ reg(makeGrammar("perl", [
 ], ["pl", "pm"]));
 
 // Elixir
-reg(makeGrammar("elixir", [
+reg(() => makeGrammar("elixir", [
   ["comment", /#[^\n]*/],
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -353,7 +358,7 @@ reg(makeGrammar("elixir", [
 ], ["ex", "exs"]));
 
 // Julia
-reg(makeGrammar("julia", [
+reg(() => makeGrammar("julia", [
   ["comment", /#[^\n]*/],
   ["comment", /#=([\s\S]*?)=#/],
   ...STRINGS_DOUBLE,
@@ -366,7 +371,7 @@ reg(makeGrammar("julia", [
 ], ["jl"]));
 
 // R
-reg(makeGrammar("r", [
+reg(() => makeGrammar("r", [
   ["comment", /#[^\n]*/],
   ...STRINGS_DOUBLE,
   ...NUMBERS,
@@ -377,11 +382,17 @@ reg(makeGrammar("r", [
 ], ["r"]));
 
 // Default fallback
-reg(makeGrammar("text", [], ["plain", "txt"]));
+reg(() => makeGrammar("text", [], ["plain", "txt"]));
+
+const grammarInstanceCache = new Map<string, LanguageGrammar>();
 
 export function getGrammar(language: string): LanguageGrammar {
   const key = language.toLowerCase();
-  return grammars[key] ?? grammars["text"]!;
+  if (grammarInstanceCache.has(key)) return grammarInstanceCache.get(key)!;
+  const entry = grammars[key] ?? grammars["text"]!;
+  const instance = typeof entry === "function" ? (entry as GrammarFactory)() : entry;
+  grammarInstanceCache.set(key, instance);
+  return instance;
 }
 
 export function listLanguages(): string[] {
