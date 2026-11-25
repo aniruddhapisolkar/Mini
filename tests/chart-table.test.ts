@@ -135,6 +135,11 @@ describe("MiniTable selection", () => {
     expect((model as any).resizable).toBe(false);
   });
 
+  it("parses with resizable option", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { resizable: true });
+    expect((model as any).resizable).toBe(true);
+  });
+
   it("defaults virtualized to false", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
     expect((model as any).virtualized).toBe(false);
