@@ -273,6 +273,16 @@ describe("MiniTable selection", () => {
     expect((model as any).viewportHeight).toBe(200);
   });
 
+  it("defaults rowHeight to 32", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).rowHeight).toBe(32);
+  });
+
+  it("defaults viewportHeight to 400", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).viewportHeight).toBe(400);
+  });
+
   it("defaults pageSize to 25", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
     expect((model as any).pageSize).toBe(25);
