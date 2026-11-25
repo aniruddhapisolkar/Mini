@@ -95,6 +95,11 @@ describe("MiniChart", () => {
     expect((model as any).yAxisLabel).toBe("Value");
   });
 
+  it("parses with title", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar", title: "Sales" });
+    expect((model as any).title).toBe("Sales");
+  });
+
   it("parses doughnut with custom ratio", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "doughnut", donutRatio: 0.7 });
     expect((model as any).donutRatio).toBe(0.7);
