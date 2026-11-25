@@ -69,3 +69,17 @@ describe("MiniDiagram pie", () => {
     expect(svg).toContain("<path");
   });
 });
+
+describe("MiniDiagram gantt", () => {
+  it("parses gantt", () => {
+    const m = parseDiagram("gantt\ntitle Plan\n  A :a1, 0, 5d\n  B :a2, after a1, 3d");
+    expect(m.diagramType).toBe("gantt");
+    expect(m.gantt!.tasks.length).toBe(2);
+  });
+  it("renders gantt SVG", () => {
+    const m = parseDiagram("gantt\n  T :t1, 0, 4d");
+    const svg = renderSVG(m);
+    expect(svg).toContain("<svg");
+    expect(svg).toContain("<rect");
+  });
+});
