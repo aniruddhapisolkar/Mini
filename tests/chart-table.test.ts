@@ -197,6 +197,11 @@ describe("MiniTable selection", () => {
     expect((model as any).showFooter).toBe(false);
   });
 
+  it("parses with showFooter", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { showFooter: true });
+    expect((model as any).showFooter).toBe(true);
+  });
+
   it("parses with aggregation option", () => {
     const model = tableModule.parse({ columns: [{ id: "val", header: "Val" }], rows: [] }, { aggregation: { val: "sum" } });
     expect((model as any).aggregation.val).toBe("sum");
