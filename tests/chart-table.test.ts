@@ -384,6 +384,16 @@ describe("MiniTable selection", () => {
     expect((model as any).rows).toEqual([]);
   });
 
+  it("counts table columns", () => {
+    const model = tableModule.parse({ columns: [{ id: "a", header: "A" }, { id: "b", header: "B" }, { id: "c", header: "C" }], rows: [] });
+    expect((model as any).columns.length).toBe(3);
+  });
+
+  it("counts table rows", () => {
+    const model = tableModule.parse({ columns: [{ id: "a", header: "A" }], rows: [{ id: "r1", cells: { a: 1 } }, { id: "r2", cells: { a: 2 } }, { id: "r3", cells: { a: 3 } }] });
+    expect((model as any).rows.length).toBe(3);
+  });
+
   it("handles table with no columns", () => {
     const model = tableModule.parse({ rows: [{ id: "r1", cells: { a: 1 } }] });
     expect((model as any).columns).toEqual([]);
