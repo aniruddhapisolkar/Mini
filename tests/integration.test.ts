@@ -245,4 +245,11 @@ describe("Cross-module integration", () => {
     expect((tableModel as any).columns.length).toBe(3);
     expect((tableModel as any).rows.length).toBe(2);
   });
+
+  it("all modules have unique ids", () => {
+    const modules = ["chart", "table", "math", "diagram", "text", "code"];
+    const ids = modules.map(id => getModule(id)!.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(modules.length);
+  });
 });
