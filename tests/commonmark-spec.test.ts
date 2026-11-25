@@ -55,6 +55,6 @@ describe("CommonMark 0.31.2 spec conformance", () => {
       console.log(`  ex ${f.example} [${f.section}]: expected "${f.expected.slice(0, 80)}" got "${f.actual.slice(0, 80)}"`);
     }
     // Harness baseline: track regressions. Update as compliance improves.
-    expect(pass).toBeGreaterThanOrEqual(315);
+    expect(pass).toBeGreaterThanOrEqual(374);
   });
 });
