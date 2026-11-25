@@ -396,6 +396,11 @@ describe("MiniTable selection", () => {
     expect((model as any).selectable).toBe(false);
   });
 
+  it("defaults selectedRows to empty Set", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).selectedRows.size).toBe(0);
+  });
+
   it("defaults resizable to false", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
     expect((model as any).resizable).toBe(false);
