@@ -166,7 +166,7 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
     }
     case "left": return `<span class="mopen delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;
     case "right": return `<span class="mclose delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;
-    case "middle": return `<span class="mrel delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;
+    case "middle": { const sz = (node as any).size ?? 1; return `<span class="mrel delim-size" style="font-size:${sz}em;vertical-align:middle">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`; }
     case "delim": return `<span class="delim" style="font-size:${node.size ?? 1}em">${escapeHtml(node.text)}</span>`;
     case "not": {
       const body = renderNode(node.body, opts, display);
