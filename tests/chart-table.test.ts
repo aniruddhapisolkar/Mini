@@ -164,6 +164,11 @@ describe("MiniChart", () => {
     expect((model as any).title).toBe("Sales");
   });
 
+  it("parses horizontal bar chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar-horizontal" });
+    expect((model as any).type).toBe("bar-horizontal");
+  });
+
   it("parses without title", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar" });
     expect((model as any).title).toBeUndefined();
