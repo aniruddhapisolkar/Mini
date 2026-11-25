@@ -143,6 +143,16 @@ describe("MiniTable selection", () => {
     expect((model as any).bordered).toBe(true);
   });
 
+  it("accepts striped false", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { striped: false });
+    expect((model as any).striped).toBe(false);
+  });
+
+  it("accepts bordered false", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { bordered: false });
+    expect((model as any).bordered).toBe(false);
+  });
+
   it("defaults selectable to false", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
     expect((model as any).selectable).toBe(false);
