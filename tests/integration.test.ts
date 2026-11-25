@@ -216,4 +216,33 @@ describe("Cross-module integration", () => {
     const codeSize = code.measure(codeModel, ctx);
     expect(codeSize.intrinsic.width).toBeGreaterThan(0);
   });
+
+  it("chart and table parse complex data", () => {
+    const chart = getModule("chart")!;
+    const table = getModule("table")!;
+
+    const chartModel = chart.parse({
+      labels: ["Jan", "Feb", "Mar", "Apr"],
+      datasets: [
+        { label: "Sales", data: [10, 20, 15, 25] },
+        { label: "Costs", data: [5, 8, 6, 10] },
+      ],
+    }, { type: "bar", title: "Monthly Report", width: 600, height: 400 });
+
+    const tableModel = table.parse({
+      columns: [
+        { id: "month", header: "Month", width: 100 },
+        { id: "sales", header: "Sales", width: 80 },
+        { id: "costs", header: "Costs", width: 80 },
+      ],
+      rows: [
+        { id: "r1", cells: { month: "Jan", sales: 10, costs: 5 } },
+        { id: "r2", cells: { month: "Feb", sales: 20, costs: 8 } },
+      ],
+    }, { pageSize: 10, striped: true, selectable: true });
+
+    expect((chartModel as any).datasets.length).toBe(2);
+    expect((tableModel as any).columns.length).toBe(3);
+    expect((tableModel as any).rows.length).toBe(2);
+  });
 });
