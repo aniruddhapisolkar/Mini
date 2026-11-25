@@ -556,7 +556,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
         i++;
         if (i >= end) break;
       }
-      blocks.push({ type: "codeBlock", language: lang, value: codeLines.join("\n"), fenced: true });
+      const fencedValue = codeLines.length > 0 ? codeLines.join("\n") + "\n" : ""; blocks.push({ type: "codeBlock", language: lang, value: fencedValue, fenced: true });
       continue;
     }
 
@@ -644,7 +644,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
       }
       // trim trailing blanks
       while (codeLines.length > 0 && codeLines[codeLines.length - 1] === "") codeLines.pop();
-      blocks.push({ type: "codeBlock", language: "", value: codeLines.join("\n"), fenced: false });
+      const indentedValue = codeLines.length > 0 ? codeLines.join("\n") + "\n" : ""; blocks.push({ type: "codeBlock", language: "", value: indentedValue, fenced: false });
       continue;
     }
 
