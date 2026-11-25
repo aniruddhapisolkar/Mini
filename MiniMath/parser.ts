@@ -757,6 +757,17 @@ export class Parser {
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "sout", mode: this.mode, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
+    if (name === "colorbox") {
+      let color = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        color = inner.map(n => (n as any).text ?? "").join("");
+      }
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "colorbox", mode: this.mode, color, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
