@@ -6,6 +6,11 @@ Alice's module. Mermaid-compatible diagrams with multiple layout algorithms.
 - Flowchart (Mermaid-compatible)
 - Sequence diagrams
 - Mindmaps (indentation-based)
+- Pie charts
+- Gantt charts
+- State diagrams
+- ER diagrams
+- Class diagrams
 
 ## Layouts
 - layered (default, Sugiyama-ish)
