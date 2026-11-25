@@ -307,6 +307,17 @@ describe("MiniTable selection", () => {
     expect(result.intrinsic.width).toBe(450);
   });
 
+  it("measures table with no rows", () => {
+    const model = tableModule.parse({
+      columns: [{ id: "a", header: "A", width: 100 }],
+      rows: [],
+    });
+    const ctx = { container: { element: {} } } as any;
+    const result = tableModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(100);
+    expect(result.intrinsic.height).toBeGreaterThan(0);
+  });
+
   it("measures with default column width", () => {
     const model = tableModule.parse({
       columns: [{ id: "a", header: "A" }, { id: "b", header: "B" }],
