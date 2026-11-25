@@ -229,6 +229,22 @@ export function parseInlines(text: string, opts: Required<ParseOptions> = DEFAUL
       // determine run length
       let runLen = 0;
       while (i + runLen < n && text[i + runLen] === ch) runLen++;
+      // flanking checks
+      const prev = i > 0 ? text[i - 1]! : "";
+      const next = i + runLen < n ? text[i + runLen]! : "";
+      const isWhitespace = (c: string) => c === "" || /\\s/.test(c);
+      const isPunct = (c: string) => c !== "" && !/\\s/.test(c) && !/[A-Za-z0-9]/.test(c);
+      const leftFlanking = !isWhitespace(next) && (isPunct(next) === false || isWhitespace(prev) || isPunct(prev));
+      // for _ : opening requires preceded by whitespace/punctuation/start (not word char)
+      const canOpen = ch === "*"
+        ? leftFlanking
+        : leftFlanking && (prev === "" || isWhitespace(prev) || isPunct(prev));
+      if (!canOpen) {
+        // not an opener; fall through (treat as text)
+        buf += ch;
+        i++;
+        continue;
+      }
       // try triple (strong+emphasis) first
       if (runLen >= 3) {
         const delim = ch.repeat(3);
@@ -347,8 +363,21 @@ function parseDelimited(
   let depth = 0;
   while (i < n) {
     if (text.startsWith(delim, i)) {
-      // ensure not followed by space? closing must not be preceded by space
+      // ensure not preceded by space
       if (i > start + delim.length && /\s/.test(text[i - 1]!)) {
+        i++;
+        continue;
+      }
+      // right-flanking check for closing
+      const ch = delim[0];
+      const afterClose = i + delim.length < n ? text[i + delim.length]! : "";
+      const isWs = (c: string) => c === "" || /\s/.test(c);
+      const isPunct = (c: string) => c !== "" && !/\s/.test(c) && !/[A-Za-z0-9]/.test(c);
+      const rightFlanking = !isWs(text[i - 1]!) && (isPunct(text[i - 1]!) === false || isWs(afterClose) || isPunct(afterClose));
+      const canClose = ch === "*"
+        ? rightFlanking
+        : rightFlanking && (afterClose === "" || isWs(afterClose) || isPunct(afterClose));
+      if (!canClose) {
         i++;
         continue;
       }
@@ -556,7 +585,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
         i++;
         if (i >= end) break;
       }
-      blocks.push({ type: "codeBlock", language: lang, value: codeLines.join("\n"), fenced: true });
+      const fencedValue = codeLines.length > 0 ? codeLines.join("\n") + "\n" : ""; blocks.push({ type: "codeBlock", language: lang, value: fencedValue, fenced: true });
       continue;
     }
 
@@ -607,7 +636,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
     }
 
     // list
-    const listMatch = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
+    const listMatch = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/);
     if (listMatch) {
       const { items, newI } = parseList(lines, opts, refs, i, end);
       blocks.push(items);
@@ -624,7 +653,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
     }
 
     // html block (simplified): starts with block-level tag
-    if (/^ {0,3}<\/?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:\s|>|\/|$)/i.test(lines[i]!)) {
+    if (/^ {0,3}<!--/.test(lines[i]!) || /^ {0,3}<\?/.test(lines[i]!) || /^ {0,3}<!\[CDATA\[/.test(lines[i]!) || /^ {0,3}<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s|>|\/)/i.test(lines[i]!)) {
       const htmlLines: string[] = [];
       while (i < end && !isBlank(lines[i]!)) {
         htmlLines.push(lines[i]!);
@@ -644,7 +673,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
       }
       // trim trailing blanks
       while (codeLines.length > 0 && codeLines[codeLines.length - 1] === "") codeLines.pop();
-      blocks.push({ type: "codeBlock", language: "", value: codeLines.join("\n"), fenced: false });
+      const indentedValue = codeLines.length > 0 ? codeLines.join("\n") + "\n" : ""; blocks.push({ type: "codeBlock", language: "", value: indentedValue, fenced: false });
       continue;
     }
 
@@ -695,14 +724,14 @@ function isBlockStart(line: string): boolean {
   if (/^(`{3,}|~{3,})/.test(line)) return true;
   if (/^ {0,3}>/.test(line)) return true;
   if (/^ {0,3}([-+*]|\d{1,9}[.)])\s/.test(line)) return true;
-  if (/^ {0,3}</.test(line) && /^ {0,3}<\/?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:\s|>|\/|$)/i.test(line)) return true;
+  if (/^ {0,3}<!--/.test(line) || /^ {0,3}<\?/.test(line) || /^ {0,3}<!\[CDATA\[/.test(line) || /^ {0,3}<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s|>|\/)/i.test(line)) return true;
   return false;
 }
 
 // ---------- list parsing ----------
 
 function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<string, LinkReference>, start: number, end: number): { items: BlockNode; newI: number } {
-  const firstMatch = lines[start]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/)!;
+  const firstMatch = lines[start]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/)!;
   const marker = firstMatch[1]!;
   const ordered = /\d/.test(marker);
   const startNum = ordered ? parseInt(marker, 10) : 1;
@@ -717,7 +746,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
   while (i < end) {
     if (isBlank(lines[i]!)) {
       if (i + 1 < end) {
-        const nm = lines[i + 1]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
+        const nm = lines[i + 1]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/);
         if (nm) {
           const nMarker = nm[1]!;
           const nOrdered = /\d/.test(nMarker);
@@ -730,7 +759,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
       }
       break;
     }
-    const m = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
+    const m = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]/);
     if (!m) break;
     // same list type?
     const mMarker = m[1]!;
@@ -776,7 +805,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
     // gather lines for this item
     const itemLines: string[] = [];
     // first line: strip marker
-    const firstLine = lines[s]!.replace(/^ {0,3}([-+*]|\d{1,9}[.)])\s/, "");
+    const firstLine = lines[s]!.replace(/^ {0,3}([-+*]|\d{1,9}[.)])[ \t]{1,4}/, "");
     itemLines.push(firstLine);
     for (let j = s + 1; j < e; j++) {
       if (isBlank(lines[j]!)) { itemLines.push(""); continue; }
