@@ -260,6 +260,19 @@ describe("MiniTable selection", () => {
     expect((model as any).currentPage).toBe(0);
   });
 
+  it("parses rows correctly", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [{ id: "r1", cells: { name: "Alice" } }, { id: "r2", cells: { name: "Bob" } }] });
+    expect((model as any).rows.length).toBe(2);
+    expect((model as any).rows[0].cells.name).toBe("Alice");
+  });
+
+  it("handles null input", () => {
+    const model = tableModule.parse(null);
+    expect(model.kind).toBe("table");
+    expect((model as any).columns).toEqual([]);
+    expect((model as any).rows).toEqual([]);
+  });
+
   it("accepts striped false", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { striped: false });
     expect((model as any).striped).toBe(false);
