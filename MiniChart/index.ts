@@ -89,6 +89,8 @@ export const chartModule: ModuleDescriptor = {
     const root: RenderNode = { id: "chart-root", kind: "chart", children: [] };
     const container = document.createElement("div");
     container.className = "mini-chart";
+    // Animation support via CSS transitions
+    container.style.transition = "all 0.3s ease";
     if (m.responsive) {
       container.style.width = "100%";
       container.style.height = "auto";
