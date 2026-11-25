@@ -189,6 +189,42 @@ export function illustrate(source: string, container: HTMLElement, options?: any
   return { id: "illustration", update() {}, destroy() { svg.remove(); } };
 }
 
+export function renderMathInElement(root: HTMLElement, options: MathOptions = {}): void {
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent || "";
+      // $$...$$ display, $...$ inline
+      const re = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g;
+      let match: RegExpExecArray | null;
+      let lastIndex = 0;
+      const frag = document.createDocumentFragment();
+      let hasMath = false;
+      while ((match = re.exec(text)) !== null) {
+        if (match.index > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+        const latex = (match[1] ?? match[2]) as string;
+        const display = !!match[1];
+        const span = document.createElement("span");
+        span.className = "mini-math-autorender";
+        const html = renderToHTML(latex, { ...options, displayMode: display });
+        span.innerHTML = html;
+        frag.appendChild(span);
+        lastIndex = re.lastIndex;
+        hasMath = true;
+      }
+      if (hasMath) {
+        if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+        node.parentNode?.replaceChild(frag, node);
+      }
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      const el = node as HTMLElement;
+      if (el.tagName === "SCRIPT" || el.tagName === "STYLE" || el.tagName === "NOSCRIPT") return;
+      // copy childNodes to array to allow mutation
+      Array.from(el.childNodes).forEach(walk);
+    }
+  };
+  walk(root);
+}
+
 export default mathModule;
 
 function escapeHtml(s: string): string { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
