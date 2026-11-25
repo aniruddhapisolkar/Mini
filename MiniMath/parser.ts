@@ -308,6 +308,10 @@ export class Parser {
       return this.parseSupSub({ type: "sizing", mode: this.mode, size: name, body } as N.ParseNode);
     }
 
+    if (name === "pmb" || name === "boldsymbol" || name === "bm") {
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "styling", mode: this.mode, style: "mathbf", body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
     // font styling
     if (fontCommands[name]) {
       const body = this.parseGroupOrAtom();
