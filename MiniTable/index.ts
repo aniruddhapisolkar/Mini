@@ -45,6 +45,7 @@ interface TableModel extends SemanticModel {
   showFooter: boolean;
   footerCells: Record<string, string>;
   aggregation: Record<string, "sum" | "avg" | "count" | "min" | "max">;
+  highlightFilter: boolean;
 }
 
 // ---- Helpers ----
@@ -80,7 +81,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max"> };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -108,6 +109,7 @@ export const tableModule: ModuleDescriptor = {
       showFooter: opts.showFooter ?? false,
       footerCells: opts.footerCells ?? {},
       aggregation: opts.aggregation ?? {},
+      highlightFilter: opts.highlightFilter ?? false,
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -309,7 +311,19 @@ export const tableModule: ModuleDescriptor = {
         }
         m.columns.forEach(col => {
           const td = document.createElement("td");
-          td.textContent = String(row.cells[col.id] ?? "");
+          const val = String(row.cells[col.id] ?? "");
+          if (m.highlightFilter && m.filter) {
+            const lower = val.toLowerCase();
+            const filterLower = m.filter.toLowerCase();
+            const idx = lower.indexOf(filterLower);
+            if (idx >= 0) {
+              td.innerHTML = val.slice(0, idx) + "<mark>" + val.slice(idx, idx + m.filter.length) + "</mark>" + val.slice(idx + m.filter.length);
+            } else {
+              td.textContent = val;
+            }
+          } else {
+            td.textContent = val;
+          }
           td.style.padding = "8px";
           td.style.borderBottom = "1px solid #eee";
           tr.appendChild(td);
