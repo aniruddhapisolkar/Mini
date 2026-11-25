@@ -120,6 +120,11 @@ describe("MiniChart", () => {
     expect((model as any).legendPosition).toBe("bottom");
   });
 
+  it("defaults legendPosition to undefined", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar" });
+    expect((model as any).legendPosition).toBeUndefined();
+  });
+
   it("parses with stacked option", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }, { label: "D2", data: [3, 7] }] }, { type: "bar", stacked: true });
     expect((model as any).stacked).toBe(true);
