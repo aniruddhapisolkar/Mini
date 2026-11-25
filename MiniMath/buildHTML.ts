@@ -76,6 +76,14 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
     }
     case "accent": {
       const base = renderNode(node.base, opts, display);
+      if (node.top) {
+        const top = (node.top as any[]).map((n: any) => renderNode(n, opts, display)).join("");
+        return `<span class="moverset"><span class="accent-top">${top}</span><span class="accent-body">${base}</span></span>`;
+      }
+      if (node.bottom) {
+        const bottom = (node.bottom as any[]).map((n: any) => renderNode(n, opts, display)).join("");
+        return `<span class="munderset"><span class="accent-body">${base}</span><span class="accent-bottom">${bottom}</span></span>`;
+      }
       const acc = accentChar(node.label);
       return `<span class="maccent"><span class="accent-body">${base}</span><span class="accent">${acc}</span></span>`;
     }

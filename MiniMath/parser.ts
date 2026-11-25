@@ -510,6 +510,25 @@ export class Parser {
       while (this.peek().type === "group_open") { this.next(); this.parseExpression(); this.expect("group_close"); }
       return this.parseUnary();
     }
+    if (name === "overset" || name === "underset") {
+      const top = this.parseGroupOrAtom();
+      const base = this.parseGroupOrAtom();
+      const t = Array.isArray(top) ? top : [top];
+      const b = Array.isArray(base) ? base : [base];
+      if (name === "overset") {
+        return this.parseSupSub({ type: "accent", mode: this.mode, label: "overset", base: b[0] ?? { type: "mathord", mode: this.mode, text: "" } as N.ParseNode, top: t } as any);
+      }
+      return this.parseSupSub({ type: "accent", mode: this.mode, label: "underset", base: b[0] ?? { type: "mathord", mode: this.mode, text: "" } as N.ParseNode, bottom: t } as any);
+    }
+    if (name === "underleftrightarrow" || name === "overleftharpoon" || name === "overrightharpoon" || name === "overleftarrow" ) {
+      const base = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
+    }
+    if (name === "mathop" || name === "mathbin" || name === "mathrel" || name === "mathopen" || name === "mathclose" || name === "mathpunct" || name === "mathinner" || name === "mathord") {
+      const body = this.parseGroupOrAtom();
+      const b = Array.isArray(body) ? body : [body];
+      return this.parseSupSub(b.length ? b[0]! : { type: "mathord", mode: this.mode, text: "" } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
@@ -551,7 +570,7 @@ export class Parser {
       const rows = this.parseArrayRows(envName);
       return { type: "cases", mode: this.mode, envName, body: rows } as N.ParseNode;
     }
-    if (envName === "aligned" || envName === "gathered" || envName === "align" || envName === "align*" || envName === "eqnarray" || envName === "split" || envName === "flalign" || envName === "multline" || envName === "multline*" || envName === "equation" || envName === "equation*" || envName === "gather" || envName === "gather*") {
+    if (envName === "aligned" || envName === "gathered" || envName === "align" || envName === "align*" || envName === "eqnarray" || envName === "split" || envName === "flalign" || envName === "multline" || envName === "subarray" || envName === "multline*" || envName === "equation" || envName === "equation*" || envName === "gather" || envName === "gather*") {
       const rows = this.parseArrayRows(envName);
       return { type: "aligned", mode: this.mode, envName, body: rows } as N.ParseNode;
     }
