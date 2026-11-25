@@ -207,7 +207,8 @@ export class Parser {
       return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
     }
     if (name === "overrightarrow" || name === "overleftarrow" || name === "overleftrightarrow" ||
-        name === "widehat" || name === "widetilde" || name === "overparen" || name === "underparen") {
+        name === "widehat" || name === "widetilde" || name === "overparen" || name === "underparen" ||
+        name === "underleftrightarrow" || name === "overleftharpoon" || name === "overrightharpoon") {
       const base = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
     }

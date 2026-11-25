@@ -210,6 +210,7 @@ function accentChar(label: string): string {
     widehat: "̂", widetilde: "̃",
     overrightarrow: "→", overleftarrow: "←", overleftrightarrow: "↔",
     overparen: "⏜", underparen: "⏝",
+    underleftrightarrow: "↔", overleftharpoon: "↼", overrightharpoon: "⇀",
   };
   return map[label] ?? "̂";
 }
