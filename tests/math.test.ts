@@ -24,6 +24,8 @@ describe("MiniMath parse/renderToHTML", () => {
     "\\xrightarrow[f]{g}",
     "\\fbox{x}",
     "\\mathclap{x}",
+    "\\left(\\frac{a}{b}\\right)",
+    "\\left[\\begin{matrix}1&2\\3&4\\end{matrix}\\right]",
     "\\begin{equation}x^2\\end{equation}",
     "\\begin{gather}a=b\\c=d\\end{gather}",
     "\\begin{array}{cc}a&b\\\\\\hline c&d\\end{array}",

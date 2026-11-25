@@ -149,6 +149,13 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const cls = node.type === "cases" ? "mcases" : node.type === "matrix" ? "mmatrix" : "marray";
       return `<span class="${cls}">${left}<span class="tbody">${rows}</span>${right}</span>`;
     }
+    case "leftright": {
+      const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
+      const leftD = node.left === "." ? "" : escapeHtml(node.left);
+      const rightD = node.right === "." ? "" : escapeHtml(node.right);
+      const sz = node.size ?? 1;
+      return `<span class="mleft-right"><span class="mopen" style="font-size:${sz}em;vertical-align:middle">${leftD}</span><span class="mleftright-body">${body}</span><span class="mclose" style="font-size:${sz}em;vertical-align:middle">${rightD}</span></span>`;
+    }
     case "left": return `<span class="mopen delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;
     case "right": return `<span class="mclose delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;
     case "middle": return `<span class="mrel delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;

@@ -133,10 +133,33 @@ export class Parser {
       return null;
     }
 
-    // left/right/middle
+    // left/right/middle — \left...\right becomes a single leftright node
     if (name === "left") {
-      const d = this.parseDelimiter();
-      return { type: "left", mode: this.mode, delim: d } as N.ParseNode;
+      const delim = this.parseDelimiter();
+      const inner: N.Expression = [];
+      let depth = 0;
+      while (true) {
+        if (this.peek().type === "eof") break;
+        if (this.peek().type === "command" && this.peek().value === "right" && depth === 0) break;
+        if (this.peek().type === "command" && this.peek().value === "left") depth++;
+        if (this.peek().type === "command" && this.peek().value === "right") depth--;
+        if (this.peek().type === "command" && this.peek().value === "middle" && depth === 0) {
+          this.next();
+          const md = this.parseDelimiter();
+          inner.push({ type: "middle", mode: this.mode, delim: md } as N.ParseNode);
+          continue;
+        }
+        const n = this.parseUnary();
+        if (n) inner.push(n);
+      }
+      let rightDelim = ".";
+      if (this.peek().type === "command" && this.peek().value === "right") {
+        this.next();
+        rightDelim = this.parseDelimiter();
+      }
+      const tall = countTall(inner);
+      const size = 1 + 0.12 * Math.min(tall, 8);
+      return this.parseSupSub({ type: "leftright", mode: this.mode, left: delim, right: rightDelim, body: inner, size } as N.ParseNode);
     }
     if (name === "right") {
       const d = this.parseDelimiter();
@@ -680,4 +703,19 @@ export class Parser {
     }
     return 0;
   }
+}
+
+
+function countTall(expr: N.Expression): number {
+  let n = 0;
+  for (const node of expr) {
+    const t = (node as any).type;
+    if (t === "genfrac" || t === "binom" || t === "sqrt" || t === "leftright" || t === "environment" || t === "array" || t === "matrix" || t === "cases" || t === "aligned") n += 2;
+    if (t === "supsub") n += 0.5;
+    if ((node as any).body && Array.isArray((node as any).body)) n += countTall((node as any).body);
+    if ((node as any).numerator) n += countTall((node as any).numerator);
+    if ((node as any).denominator) n += countTall((node as any).denominator);
+    if ((node as any).base) { try { n += countTall(Array.isArray((node as any).base) ? (node as any).base : [(node as any).base]); } catch {} }
+  }
+  return n;
 }
