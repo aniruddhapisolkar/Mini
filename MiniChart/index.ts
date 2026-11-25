@@ -29,6 +29,7 @@ interface ChartModel extends SemanticModel {
   title?: string;
   xAxisLabel?: string;
   yAxisLabel?: string;
+  donutRatio?: number;
   width: number;
   height: number;
 }
@@ -53,7 +54,7 @@ export const chartModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "render:canvas", "measure:intrinsic", "compose:embed", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg", "canvas"],
   parse(input: unknown, options?: unknown): ChartModel {
-    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string; xAxisLabel?: string; yAxisLabel?: string };
+    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string; xAxisLabel?: string; yAxisLabel?: string; donutRatio?: number };
     const raw = (input ?? {}) as { labels?: string[]; datasets?: ChartDataset[] };
     const type = opts.type ?? "bar";
     const labels = raw.labels ?? [];
@@ -72,6 +73,7 @@ export const chartModule: ModuleDescriptor = {
       ...(opts.title !== undefined ? { title: opts.title } : {}),
       ...(opts.xAxisLabel !== undefined ? { xAxisLabel: opts.xAxisLabel } : {}),
       ...(opts.yAxisLabel !== undefined ? { yAxisLabel: opts.yAxisLabel } : {}),
+      ...(opts.donutRatio !== undefined ? { donutRatio: opts.donutRatio } : {}),
       width: opts.width ?? 400,
       height: opts.height ?? 300,
     };
@@ -290,7 +292,7 @@ export const chartModule: ModuleDescriptor = {
       const cx = m.width / 2;
       const cy = m.height / 2;
       const r = Math.min(plotW, plotH) / 2;
-      const innerR = m.type === "doughnut" ? r * 0.5 : 0;
+      const innerR = m.type === "doughnut" ? r * (m.donutRatio ?? 0.5) : 0;
       const values = m.datasets[0]?.data ?? [];
       const total = values.reduce((a, b) => a + b, 0) || 1;
       let startAngle = -Math.PI / 2;
