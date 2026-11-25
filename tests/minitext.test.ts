@@ -49,6 +49,17 @@ describe("MiniText parser", () => {
     expect(doc.children[0].type).toBe("blockquote");
   });
 
+  it("renders tight lists without paragraph wrappers", () => {
+    const html = renderDocument(parseMarkdown("- a\n- b"));
+    expect(html).not.toContain("<p");
+    expect(html).toContain("<li");
+  });
+
+  it("renders loose lists with paragraph wrappers", () => {
+    const html = renderDocument(parseMarkdown("- a\n\n- b"));
+    expect(html).toContain("<p");
+  });
+
   it("parses thematic break", () => {
     const doc = parseMarkdown("---");
     expect(doc.children[0].type).toBe("thematicBreak");

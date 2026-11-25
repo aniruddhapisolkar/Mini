@@ -708,9 +708,26 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
   const items: any[] = [];
   let i = start;
   let tight = true;
+  let hasInternalBlank = false;
+  let sawBlankBetween = false;
   // We'll collect items: each item starts with marker; content may span multiple lines indented.
   const itemStarts: number[] = [];
   while (i < end) {
+    if (isBlank(lines[i]!)) {
+      if (i + 1 < end) {
+        const nm = lines[i + 1]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
+        if (nm) {
+          const nMarker = nm[1]!;
+          const nOrdered = /\d/.test(nMarker);
+          if (nOrdered === ordered && (ordered || nMarker === bulletChar)) {
+            sawBlankBetween = true;
+            i++;
+            continue;
+          }
+        }
+      }
+      break;
+    }
     const m = lines[i]!.match(/^ {0,3}([-+*]|\d{1,9}[.)])\s/);
     if (!m) break;
     // same list type?
@@ -742,6 +759,14 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
       break;
     }
   }
+  // Detect blank lines between items -> loose list (already tracked during collection)
+  for (let k = 0; k + 1 < itemStarts.length; k++) {
+    for (let j = itemStarts[k]! + 1; j < itemStarts[k + 1]!; j++) {
+      if (isBlank(lines[j]!)) { sawBlankBetween = true; break; }
+    }
+    if (sawBlankBetween) break;
+  }
+
   // Now parse each item's lines
   for (let k = 0; k < itemStarts.length; k++) {
     const s = itemStarts[k]!;
@@ -756,6 +781,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
       // strip up to 4 spaces indent
       itemLines.push(lines[j]!.replace(/^ {0,4}/, ""));
     }
+    if (itemLines.some(l => l === "")) hasInternalBlank = true;
     // task list check
     let checked: boolean | null = null;
     let contentLines = itemLines;
@@ -767,8 +793,7 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
     const inner = parseBlockList(itemLines, opts, refs, 0, itemLines.length);
     items.push({ type: "listItem", children: inner.length ? inner : [{ type: "paragraph", children: parseInlines(itemLines.join("\n"), opts, refs) }], checked });
   }
-  // tight detection: if any item has multiple paragraphs or blank lines -> loose
-  // simplified: loose if any item content had blank line
+  tight = !(sawBlankBetween || hasInternalBlank);
   const listNode: BlockNode = {
     type: "list",
     ordered,

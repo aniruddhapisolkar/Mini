@@ -388,20 +388,28 @@ export function listLanguages(): string[] {
   return Object.keys(grammars);
 }
 
+// Cache combined regex per grammar to avoid recompilation on every tokenize call.
+const combinedRegexCache = new Map<string, RegExp | null>();
+
+function getCombinedRegex(grammar: LanguageGrammar): RegExp | null {
+  if (combinedRegexCache.has(grammar.id)) return combinedRegexCache.get(grammar.id)!;
+  const parts = grammar.rules.map((r, idx) => `(?<g${idx}>${r.pattern.source})`);
+  const combined = parts.length ? new RegExp(parts.join("|"), "g") : null;
+  combinedRegexCache.set(grammar.id, combined);
+  return combined;
+}
+
 export function tokenize(source: string, language: string): CodeToken[] {
   const grammar = getGrammar(language);
   const tokens: CodeToken[] = [];
   const lines = source.split("\n");
+  const combined = getCombinedRegex(grammar);
   for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
     const line = lines[lineIdx] ?? "";
     let col = 0;
     // scan the line
     let i = 0;
     const n = line.length;
-    // build combined regex
-    const parts = grammar.rules.map((r, idx) => `(?<g${idx}>${r.pattern.source})`);
-    // handle flags: use 'g' + (pattern has m? include m). We'll apply per-line; patterns with ^ need m but we handle line start manually. Simpler: prepend handling.
-    const combined = parts.length ? new RegExp(parts.join("|"), "g") : null;
     if (!combined) {
       if (line.length > 0) tokens.push({ text: line, scope: "plain", line: lineIdx, column: 0 });
       // newline
@@ -409,7 +417,7 @@ export function tokenize(source: string, language: string): CodeToken[] {
       continue;
     }
     // Reset lastIndex
-    combined.lastIndex = 0;
+    if (combined) combined.lastIndex = 0;
     let last = 0;
     let m: RegExpExecArray | null;
     while ((m = combined.exec(line)) !== null) {
