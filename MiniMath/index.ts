@@ -55,7 +55,9 @@ export function renderToHTML(latex: string, options: MathOptions = {}): string {
     const color = options.errorColor ?? "#cc0000";
     return `<span class="katex-error" style="color:${color}">${escapeHtml(latex)}</span>`;
   }
-  return buildHTML(expr!, { ...options, displayMode: options.displayMode ?? false });
+  const html = buildHTML(expr!, { ...options, displayMode: options.displayMode ?? false });
+  // copy-tex: expose original LaTeX on the root span
+  return html.replace(/^<span class="katex">/, `<span class="katex" data-latex="${escapeHtml(latex)}">`);
 }
 
 export function renderToMathML(latex: string, options: MathOptions = {}): string {
