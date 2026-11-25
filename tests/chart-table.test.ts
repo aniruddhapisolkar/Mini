@@ -186,6 +186,16 @@ describe("MiniTable selection", () => {
     expect((model as any).virtualized).toBe(false);
   });
 
+  it("defaults highlightFilter to false", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).highlightFilter).toBe(false);
+  });
+
+  it("parses with highlightFilter option", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { highlightFilter: true });
+    expect((model as any).highlightFilter).toBe(true);
+  });
+
   it("parses with showFooter option", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { showFooter: true, footerCells: { name: "Total" } });
     expect((model as any).showFooter).toBe(true);
