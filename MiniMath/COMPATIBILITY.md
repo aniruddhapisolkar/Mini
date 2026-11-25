@@ -44,7 +44,7 @@ Reference: KaTeX v0.19.1
 
 ## Not yet implemented
 - \def, \newcommand macros (token-level expansion)
-- mhchem chemistry
+- mhchem chemistry (basic: \ce with subscripts/superscripts)
 - copy-tex
 - Full TeX font metrics (currently em-based/canvas approximations)
 - Full stretchy delimiter sizing
