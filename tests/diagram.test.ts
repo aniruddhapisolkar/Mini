@@ -41,3 +41,17 @@ describe("MiniDiagram sequence", () => {
     expect(svg).toContain("hi");
   });
 });
+
+describe("MiniDiagram mindmap", () => {
+  it("parses mindmap", () => {
+    const m = parseDiagram("mindmap\n  root((central))\n    A\n    B\n      B1");
+    expect(m.diagramType).toBe("mindmap");
+    expect(m.nodes.length).toBe(4);
+    expect(m.edges.length).toBe(3);
+  });
+  it("renders mindmap SVG", () => {
+    const m = parseDiagram("mindmap\n  root\n    child");
+    const svg = renderSVG(m);
+    expect(svg).toContain("<svg");
+  });
+});

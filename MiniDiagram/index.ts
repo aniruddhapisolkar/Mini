@@ -12,7 +12,7 @@ import { renderToHTML } from "../MiniMath/index.js";
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
 interface Subgraph { id: string; title: string; nodes: string[]; }
-interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; }
+interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; }
 
 function parseNodeToken(tok: string): { id: string; label: string; shape: string } {
   tok = tok.trim();
@@ -34,6 +34,9 @@ function parseNodeToken(tok: string): { id: string; label: string; shape: string
 
 export function parseDiagram(source: string): DiagramModel {
   const trimmed = source.trim();
+  if (/^mindmap\b/i.test(trimmed)) {
+    return parseMindmapDiagram(trimmed);
+  }
   if (/^sequenceDiagram\b/i.test(trimmed)) {
     return parseSequenceDiagram(trimmed);
   }
@@ -105,6 +108,28 @@ export function parseDiagram(source: string): DiagramModel {
     n.h = 32;
   }
   return { kind: "diagram", version: 1, diagramType: "flowchart", direction, nodes: nodeList, edges, subgraphs } as DiagramModel;
+}
+
+export function parseMindmapDiagram(source: string): DiagramModel {
+  const lines = source.split(/\n/).map(l => l.trimEnd()).filter(l => l.trim().length > 0);
+  const nodes: DiagramNode[] = [];
+  const edges: DiagramEdge[] = [];
+  const stack: { indent: number; id: string }[] = [];
+  let idx = 0;
+  for (const raw of lines) {
+    if (/^mindmap\b/i.test(raw.trim())) continue;
+    const indent = raw.length - raw.trimStart().length;
+    const label = raw.trim().replace(/^[-*]\s*/, "");
+    const id = `m${idx++}`;
+    nodes.push({ id, label, shape: "round", x: 0, y: 0, w: Math.max(60, label.length * 8 + 24), h: 32 });
+    // find parent
+    while (stack.length > 0 && stack[stack.length-1]!.indent >= indent) stack.pop();
+    if (stack.length) {
+      edges.push({ from: stack[stack.length-1]!.id, to: id, style: "solid", arrow: false });
+    }
+    stack.push({ indent, id });
+  }
+  return { kind: "diagram", version: 1, diagramType: "mindmap", direction: "TD", layout: "tree", nodes, edges, subgraphs: [] } as DiagramModel;
 }
 
 export function parseSequenceDiagram(source: string): DiagramModel {
