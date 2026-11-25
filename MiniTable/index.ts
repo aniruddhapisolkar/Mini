@@ -117,6 +117,9 @@ export const tableModule: ModuleDescriptor = {
     const root: RenderNode = { id: "table-root", kind: "table", children: [] };
     const container = document.createElement("div");
     container.className = "mini-table";
+    container.style.setProperty("--mini-table-bg", "var(--mini-bg, #fff)");
+    container.style.setProperty("--mini-table-text", "var(--mini-text, #333)");
+    container.style.setProperty("--mini-table-border", "var(--mini-border, #ccc)");
 
     // Filter input
     const filterInput = document.createElement("input");
