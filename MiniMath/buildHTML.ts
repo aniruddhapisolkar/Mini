@@ -181,7 +181,9 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const leftD = node.left === "." ? "" : escapeHtml(node.left);
       const rightD = node.right === "." ? "" : escapeHtml(node.right);
       const sz = node.size ?? 1;
-      return `<span class="mleft-right"><span class="mopen" style="font-size:${sz}em;vertical-align:middle">${leftD}</span><span class="mleftright-body">${body}</span><span class="mclose" style="font-size:${sz}em;vertical-align:middle">${rightD}</span></span>`;
+      // Stretch delimiter via scaleY around center for better visual matching
+      const scale = Math.max(1, sz);
+      return `<span class="mleft-right"><span class="mopen" style="display:inline-block;transform:scaleY(${scale});transform-origin:center;vertical-align:middle">${leftD}</span><span class="mleftright-body">${body}</span><span class="mclose" style="display:inline-block;transform:scaleY(${scale});transform-origin:center;vertical-align:middle">${rightD}</span></span>`;
     }
     case "left": return `<span class="mopen delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;
     case "right": return `<span class="mclose delim-size">${escapeHtml(node.delim === "." ? "" : node.delim)}</span>`;
