@@ -580,10 +580,9 @@ export const chartModule: ModuleDescriptor = {
     const handle: RenderHandle = {
       id: root.id,
       update(input) {
-        // Re-parse and re-render (simplified)
-        const newModel = chartModule.parse(input, { type: m.type, width: m.width, height: m.height, title: m.title });
+        const newModel = chartModule.parse(input, { type: m.type, width: m.width, height: m.height, title: m.title, xAxisLabel: m.xAxisLabel, yAxisLabel: m.yAxisLabel });
         container.innerHTML = "";
-        const newResult = chartModule.render(newModel, ctx);
+        chartModule.render(newModel, ctx);
       },
       destroy() { container.remove(); },
     };
