@@ -12,7 +12,7 @@ import { renderToHTML } from "../MiniMath/index.js";
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
 interface Subgraph { id: string; title: string; nodes: string[]; }
-interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; }
+interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap" | "pie" | "gantt"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; pie?: { title: string; slices: { label: string; value: number }[]; }; gantt?: { title: string; tasks: { name: string; id: string; start: number; duration: number }[]; }; }
 
 function parseNodeToken(tok: string): { id: string; label: string; shape: string } {
   tok = tok.trim();
@@ -34,6 +34,12 @@ function parseNodeToken(tok: string): { id: string; label: string; shape: string
 
 export function parseDiagram(source: string): DiagramModel {
   const trimmed = source.trim();
+  if (/^gantt\b/i.test(trimmed)) {
+    return parseGanttDiagram(trimmed);
+  }
+  if (/^pie\b/i.test(trimmed)) {
+    return parsePieDiagram(trimmed);
+  }
   if (/^mindmap\b/i.test(trimmed)) {
     return parseMindmapDiagram(trimmed);
   }
@@ -132,6 +138,61 @@ export function parseMindmapDiagram(source: string): DiagramModel {
   return { kind: "diagram", version: 1, diagramType: "mindmap", direction: "TD", layout: "tree", nodes, edges, subgraphs: [] } as DiagramModel;
 }
 
+export function parsePieDiagram(source: string): DiagramModel {
+  const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const slices: { label: string; value: number }[] = [];
+  let title = "";
+  for (const line of lines) {
+    if (/^pie\b/i.test(line)) continue;
+    const tm = line.match(/^title\s+(.+)$/i); if (tm) { title = tm[1]!.trim(); continue; }
+    const m = line.match(/^"([^"]+)"\s*:\s*([\d.]+)$/);
+    if (m) slices.push({ label: m[1]!, value: parseFloat(m[2]!) });
+  }
+  return { kind: "diagram", version: 1, diagramType: "pie", direction: "TD", layout: "layered", nodes: [], edges: [], subgraphs: [], pie: { title, slices } } as any;
+}
+
+export function parseGanttDiagram(source: string): DiagramModel {
+  const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const tasks: { name: string; id: string; start: number; duration: number }[] = [];
+  let title = "";
+  const idStart = new Map<string, number>();
+  let cursor = 0;
+  for (const line of lines) {
+    if (/^gantt\b/i.test(line)) continue;
+    const tm = line.match(/^title\s+(.+)$/i); if (tm) { title = tm[1]!.trim(); continue; }
+    if (/^(dateFormat|axisFormat|section)\b/i.test(line)) continue;
+    // task line: "name :id, start, duration" or "name : id, after x, 20d"
+    const m = line.match(/^(.+?)\s*:\s*(.+)$/);
+    if (!m) continue;
+    const name = m[1]!.trim();
+    const rest = m[2]!.trim();
+    const parts = rest.split(",").map(p => p.trim());
+    const id = parts[0] || `t${tasks.length}`;
+    let start = 0;
+    let duration = 1;
+    if (parts.length >= 3) {
+      const s = parts[1]!;
+      if (/^after\s+/i.test(s)) {
+        const ref = s.replace(/^after\s+/i, "").trim();
+        start = idStart.get(ref) ?? cursor;
+      } else if (/^\d+$/.test(s)) {
+        start = parseInt(s, 10);
+      }
+      const durStr = parts[2]!;
+      const dm = durStr.match(/(\d+)d?/);
+      if (dm) duration = parseInt(dm[1]!, 10);
+    } else if (parts.length === 2) {
+      const durStr = parts[1]!;
+      const dm = durStr.match(/(\d+)d?/);
+      if (dm) duration = parseInt(dm[1]!, 10);
+    }
+    tasks.push({ name, id, start, duration });
+    idStart.set(id, start + duration);
+    cursor = Math.max(cursor, start + duration);
+  }
+  return { kind: "diagram", version: 1, diagramType: "gantt", direction: "TD", layout: "layered", nodes: [], edges: [], subgraphs: [], gantt: { title, tasks } } as any;
+}
+
 export function parseSequenceDiagram(source: string): DiagramModel {
   const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
   const participants: string[] = [];
@@ -220,6 +281,8 @@ export function layout(model: DiagramModel) {
 
 export function renderSVG(model: DiagramModel): string {
   if (model.diagramType === "sequence") return renderSequenceSVG(model);
+  if (model.diagramType === "pie") return renderPieSVG(model);
+  if (model.diagramType === "gantt") return renderGanttSVG(model);
   layout(model);
   const nodes = model.nodes;
   const byId = new Map(nodes.map(n => [n.id, n]));
@@ -306,6 +369,58 @@ function renderSequenceSVG(model: DiagramModel): string {
   return parts.join("");
 }
 
+function renderPieSVG(model: any): string {
+  const pie = model.pie;
+  const slices = pie.slices as { label: string; value: number }[];
+  const total = slices.reduce((s: number, sl: any) => s + sl.value, 0) || 1;
+  const w = 320, h = 260;
+  const cx = w/2, cy = h/2 + 10, r = 90;
+  const colors = ["#4e79a7","#f28e2b","#e15759","#76b7b2","#59a14f","#edc948","#b07aa1","#ff9da7","#9c755f","#bab0ac"];
+  const parts: string[] = [];
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="mini-diagram mini-pie">`);
+  if (pie.title) parts.push(`<text x="${w/2}" y="20" text-anchor="middle" font-size="14" fill="currentColor">${escapeXml(pie.title)}</text>`);
+  let angle = -Math.PI/2;
+  slices.forEach((sl, i) => {
+    const frac = sl.value / total;
+    const a2 = angle + frac * Math.PI * 2;
+    const x1 = cx + r * Math.cos(angle), y1 = cy + r * Math.sin(angle);
+    const x2 = cx + r * Math.cos(a2), y2 = cy + r * Math.sin(a2);
+    const large = frac > 0.5 ? 1 : 0;
+    const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
+    parts.push(`<path d="${d}" fill="${colors[i % colors.length]}" stroke="white" stroke-width="1"/>`);
+    // label
+    const mid = angle + frac * Math.PI;
+    const lx = cx + (r+15) * Math.cos(mid), ly = cy + (r+15) * Math.sin(mid);
+    parts.push(`<text x="${lx}" y="${ly}" font-size="10" fill="currentColor" text-anchor="middle">${escapeXml(sl.label)}</text>`);
+    angle = a2;
+  });
+  parts.push(`</svg>`);
+  return parts.join("");
+}
+
+function renderGanttSVG(model: any): string {
+  const g = model.gantt;
+  const tasks = g.tasks as { name: string; id: string; start: number; duration: number }[];
+  const total = Math.max(...tasks.map((t: any) => t.start + t.duration), 1);
+  const rowH = 24, leftW = 120, barArea = 400;
+  const w = leftW + barArea + 20;
+  const h = 40 + tasks.length * rowH + 20;
+  const scale = barArea / Math.max(1, total);
+  const parts: string[] = [];
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="mini-diagram mini-gantt">`);
+  if (g.title) parts.push(`<text x="${w/2}" y="20" text-anchor="middle" font-size="14" fill="currentColor">${escapeXml(g.title)}</text>`);
+  tasks.forEach((t, i) => {
+    const y = 30 + i * rowH;
+    parts.push(`<text x="8" y="${y + 16}" font-size="11" fill="currentColor">${escapeXml(t.name)}</text>`);
+    const x = leftW + t.start * scale;
+    const bw = Math.max(2, t.duration * scale);
+    parts.push(`<rect x="${x}" y="${y}" width="${bw}" height="${rowH-4}" rx="3" ry="3" fill="steelblue" stroke="none"/>`);
+    parts.push(`<text x="${x + 4}" y="${y + 15}" font-size="10" fill="white">${escapeXml(t.id)}</text>`);
+  });
+  parts.push(`</svg>`);
+  return parts.join("");
+}
+
 function escapeXml(s: string): string { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
 export const diagramModule: ModuleDescriptor = {
@@ -342,6 +457,16 @@ export const diagramModule: ModuleDescriptor = {
   },
   measure(model: SemanticModel, _ctx: RenderContext, constraints?: MeasureConstraints): MeasureResult {
     const m = model as DiagramModel;
+    if (m.diagramType === "gantt") {
+      const tasks = (m as any).gantt?.tasks ?? [];
+      const total = Math.max(...tasks.map((t: any) => t.start + t.duration), 1);
+      const w = 120 + 400 + 20;
+      const h = 40 + tasks.length * 24 + 20;
+      return { intrinsic: { width: w, height: h }, min: { width: 200, height: 60 }, bbox: { x: 0, y: 0, width: w, height: h } };
+    }
+    if (m.diagramType === "pie") {
+      return { intrinsic: { width: 320, height: 260 }, min: { width: 200, height: 160 }, bbox: { x: 0, y: 0, width: 320, height: 260 } };
+    }
     if (m.diagramType === "sequence") {
       const seq = m.sequence!;
       const w = Math.max(120, seq.participants.length * 140 + 40);

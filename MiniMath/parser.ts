@@ -138,6 +138,8 @@ export class Parser {
       const delim = this.parseDelimiter();
       const inner: N.Expression = [];
       let depth = 0;
+      // tallness estimated after parsing; placeholder size 1.2
+      const sizeEst = 1.2;
       while (true) {
         if (this.peek().type === "eof") break;
         if (this.peek().type === "command" && this.peek().value === "right" && depth === 0) break;
@@ -146,19 +148,19 @@ export class Parser {
         if (this.peek().type === "command" && this.peek().value === "middle" && depth === 0) {
           this.next();
           const md = this.parseDelimiter();
-          inner.push({ type: "middle", mode: this.mode, delim: md } as N.ParseNode);
+          inner.push({ type: "middle", mode: this.mode, delim: md, size: sizeEst } as N.ParseNode);
           continue;
         }
         const n = this.parseUnary();
         if (n) inner.push(n);
       }
+      const tall = countTall(inner);
+      const size = 1 + 0.12 * Math.min(tall, 8);
       let rightDelim = ".";
       if (this.peek().type === "command" && this.peek().value === "right") {
         this.next();
         rightDelim = this.parseDelimiter();
       }
-      const tall = countTall(inner);
-      const size = 1 + 0.12 * Math.min(tall, 8);
       return this.parseSupSub({ type: "leftright", mode: this.mode, left: delim, right: rightDelim, body: inner, size } as N.ParseNode);
     }
     if (name === "right") {
@@ -205,7 +207,8 @@ export class Parser {
       return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
     }
     if (name === "overrightarrow" || name === "overleftarrow" || name === "overleftrightarrow" ||
-        name === "widehat" || name === "widetilde" || name === "overparen" || name === "underparen") {
+        name === "widehat" || name === "widetilde" || name === "overparen" || name === "underparen" ||
+        name === "underleftrightarrow" || name === "overleftharpoon" || name === "overrightharpoon") {
       const base = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
     }
@@ -338,7 +341,7 @@ export class Parser {
     }
 
     // \operatorname
-    if (name === "operatorname" || name === "operatorname*") {
+    if (name === "operatorname" || name === "operatorname*" || name === "DeclareMathOperator" || name === "DeclareMathOperator*") {
       let txt = "";
       if (this.peek().type === "group_open") {
         this.next();
