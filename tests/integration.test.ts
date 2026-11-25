@@ -60,4 +60,28 @@ describe("Cross-module integration", () => {
     expect(chartModel.kind).toBe("chart");
     expect(tableModel.kind).toBe("table");
   });
+
+  it("math module parses latex", () => {
+    const math = getModule("math")!;
+    const model = math.parse("x^2 + y^2 = z^2");
+    expect(model.kind).toBe("math");
+  });
+
+  it("code module parses source", () => {
+    const code = getModule("code")!;
+    const model = code.parse("const x = 1;", { language: "javascript" });
+    expect(model.kind).toBe("code");
+  });
+
+  it("text module parses markdown", () => {
+    const text = getModule("text")!;
+    const model = text.parse("# Hello\n\nWorld");
+    expect(model.kind).toBe("text");
+  });
+
+  it("diagram module parses flowchart", () => {
+    const diagram = getModule("diagram")!;
+    const model = diagram.parse("graph TD; A-->B;");
+    expect(model.kind).toBe("diagram");
+  });
 });
