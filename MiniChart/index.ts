@@ -205,21 +205,43 @@ export const chartModule: ModuleDescriptor = {
 
       // Bars
       if (m.type === "bar") {
-        m.datasets.forEach((ds, di) => {
-          ds.data.forEach((val, i) => {
-            const x = padding.left + groupW * i + (groupW - barW) / 2;
-            const h = (Math.abs(val) / maxVal) * plotH;
-            const y = padding.top + plotH - h;
-            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-            rect.setAttribute("x", String(x));
-            rect.setAttribute("y", String(y));
-            rect.setAttribute("width", String(barW));
-            rect.setAttribute("height", String(h));
-            rect.setAttribute("fill", ds.color ?? resolveColor(di));
-            rect.setAttribute("data-value", String(val));
-            svg.appendChild(rect);
+        if (m.stacked) {
+          // Stacked bars
+          m.labels.forEach((label, i) => {
+            let yOffset = 0;
+            m.datasets.forEach((ds, di) => {
+              const val = ds.data[i] ?? 0;
+              const h = (Math.abs(val) / maxVal) * plotH;
+              const x = padding.left + groupW * i + (groupW - barW) / 2;
+              const y = padding.top + plotH - yOffset - h;
+              const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+              rect.setAttribute("x", String(x));
+              rect.setAttribute("y", String(y));
+              rect.setAttribute("width", String(barW));
+              rect.setAttribute("height", String(h));
+              rect.setAttribute("fill", ds.color ?? resolveColor(di));
+              rect.setAttribute("data-value", String(val));
+              svg.appendChild(rect);
+              yOffset += h;
+            });
           });
-        });
+        } else {
+          m.datasets.forEach((ds, di) => {
+            ds.data.forEach((val, i) => {
+              const x = padding.left + groupW * i + (groupW - barW) / 2;
+              const h = (Math.abs(val) / maxVal) * plotH;
+              const y = padding.top + plotH - h;
+              const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+              rect.setAttribute("x", String(x));
+              rect.setAttribute("y", String(y));
+              rect.setAttribute("width", String(barW));
+              rect.setAttribute("height", String(h));
+              rect.setAttribute("fill", ds.color ?? resolveColor(di));
+              rect.setAttribute("data-value", String(val));
+              svg.appendChild(rect);
+            });
+          });
+        }
       }
 
       // Horizontal bars
