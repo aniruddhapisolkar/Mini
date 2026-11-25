@@ -2,6 +2,7 @@
 // Phase 2 implementation. Not yet full spec compliance; see tests for covered constructs.
 
 import type { BlockNode, InlineNode, LinkReference, TextDocument } from "./types.js";
+import { HTML5_ENTITIES } from "./entities.js";
 
 export interface ParseOptions {
   gfm?: boolean;
@@ -70,6 +71,7 @@ function decodeEntity(s: string): string {
     try { return String.fromCodePoint(num); } catch { return s; }
   }
   const name = s.slice(1, -1);
+  if (Object.prototype.hasOwnProperty.call(HTML5_ENTITIES, name)) return HTML5_ENTITIES[name]!;
   if (Object.prototype.hasOwnProperty.call(ENTITY_MAP, name)) return ENTITY_MAP[name]!;
   return s;
 }
