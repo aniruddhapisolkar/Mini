@@ -58,7 +58,8 @@ function renderBlock(b: BlockNode, opts: RenderOptions, sanitize: boolean, typo:
     case "list": {
       const tag = b.ordered ? "ol" : "ul";
       const start = b.ordered && b.start !== 1 ? ` start="${b.start}"` : "";
-      const items = b.children.map(li => renderListItem(li, opts, sanitize, typo)).join("");
+      const tight = (b as any).tight !== false;
+      const items = b.children.map(li => renderListItem(li, opts, sanitize, typo, tight)).join("");
       return `<${tag}${start} class="mini-text-list">${items}</${tag}>`;
     }
     case "listItem": {
@@ -91,11 +92,15 @@ function renderBlock(b: BlockNode, opts: RenderOptions, sanitize: boolean, typo:
   }
 }
 
-function renderListItem(li: any, opts: RenderOptions, sanitize: boolean, typo: boolean): string {
+function renderListItem(li: any, opts: RenderOptions, sanitize: boolean, typo: boolean, tight: boolean = false): string {
   if (li.type !== "listItem") return "";
   const checked = li.checked;
   let cb = "";
   if (checked !== null && checked !== undefined) cb = `<input type="checkbox" ${checked ? "checked" : ""} disabled /> `;
+  // Tight lists: render a single paragraph's inlines directly without <p>
+  if (tight && Array.isArray(li.children) && li.children.length === 1 && li.children[0].type === "paragraph") {
+    return `<li class="mini-text-li">${cb}${renderInlines(li.children[0].children, typo)}</li>`;
+  }
   return `<li class="mini-text-li">${cb}${renderBlocks(li.children, opts)}</li>`;
 }
 

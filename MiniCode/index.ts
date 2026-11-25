@@ -11,6 +11,92 @@ import { getTheme } from "./themes.js";
 import { TextProcessor } from "../MiniRender/text/index.js";
 const escapeHtml = TextProcessor.escapeHtml;
 
+function paintCode(wrapper: HTMLElement, m: CodeModel, opts: Record<string, unknown>): void {
+  const themeId = (opts.theme as string) || "github-light";
+  const theme = getTheme(themeId);
+  const lineNumbers = opts.lineNumbers !== false;
+  const highlightLines = (opts.highlightLines as number[]) || [];
+  const diff = (opts.diff as Array<{ line: number; type: "add" | "del" }>) || [];
+  const foldRanges = (opts.foldRanges as Array<{ start: number; end: number }>) || [];
+
+  const lines = m.source.split("\n");
+  const lineTokens: CodeToken[][] = lines.map(() => []);
+  for (const t of m.tokens) {
+    if (t.text === "\n") continue;
+    if (t.line >= 0 && t.line < lineTokens.length) {
+      const arr = lineTokens[t.line];
+      if (arr) arr.push(t);
+    }
+  }
+
+  wrapper.innerHTML = "";
+  wrapper.className = "mini-code";
+  wrapper.style.background = theme.background;
+  wrapper.style.color = theme.foreground;
+  wrapper.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, monospace";
+  wrapper.style.fontSize = "13px";
+  wrapper.style.lineHeight = "1.5";
+  wrapper.style.padding = "12px";
+  wrapper.style.borderRadius = "6px";
+  wrapper.style.overflow = "auto";
+
+  const pre = document.createElement("pre");
+  pre.style.margin = "0";
+  const code = document.createElement("code");
+  code.className = `language-${m.language}`;
+
+  for (let li = 0; li < lines.length; li++) {
+    const lineEl = document.createElement("div");
+    lineEl.className = "mini-code-line";
+    lineEl.setAttribute("data-line", String(li + 1));
+    if (highlightLines.includes(li + 1)) lineEl.style.background = "rgba(255,235,59,0.15)";
+    const diffEntry = diff.find(d => d.line === li + 1);
+    if (diffEntry) {
+      lineEl.style.background = diffEntry.type === "add" ? "rgba(46,160,67,0.15)" : "rgba(248,81,73,0.15)";
+    }
+
+    if (lineNumbers) {
+      const ln = document.createElement("span");
+      ln.className = "mini-code-lineno";
+      ln.textContent = String(li + 1);
+      ln.style.display = "inline-block";
+      ln.style.width = "3em";
+      ln.style.textAlign = "right";
+      ln.style.marginRight = "1em";
+      ln.style.color = theme.colors.comment ?? theme.foreground;
+      ln.style.userSelect = "none";
+      lineEl.appendChild(ln);
+    }
+
+    if (diffEntry) {
+      const marker = document.createElement("span");
+      marker.textContent = diffEntry.type === "add" ? "+" : "-";
+      marker.style.marginRight = "0.5em";
+      marker.style.color = diffEntry.type === "add" ? "#2ea043" : "#f85149";
+      lineEl.appendChild(marker);
+    }
+
+    const toks = lineTokens[li] || [];
+    if (toks.length === 0) {
+      const span = document.createElement("span");
+      span.textContent = lines[li] || " ";
+      span.style.color = theme.foreground;
+      lineEl.appendChild(span);
+    } else {
+      for (const tok of toks) {
+        const span = document.createElement("span");
+        span.className = `token ${tok.scope}`;
+        span.textContent = tok.text;
+        span.style.color = theme.colors[tok.scope] || theme.foreground;
+        lineEl.appendChild(span);
+      }
+    }
+    code.appendChild(lineEl);
+  }
+  pre.appendChild(code);
+  wrapper.appendChild(pre);
+}
+
 export const codeModule: ModuleDescriptor = {
   id: "code",
   name: "MiniCode",
@@ -28,103 +114,18 @@ export const codeModule: ModuleDescriptor = {
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
     const m = model as unknown as CodeModel;
     const opts = (model.metadata ?? {}) as Record<string, unknown>;
-    const themeId = (opts.theme as string) || "github-light";
-    const theme = getTheme(themeId);
-    const lineNumbers = opts.lineNumbers !== false;
-    const highlightLines = (opts.highlightLines as number[]) || [];
-    const diff = (opts.diff as Array<{ line: number; type: "add" | "del" }>) || [];
-    const foldRanges = (opts.foldRanges as Array<{ start: number; end: number }>) || [];
-
     const root: RenderNode = { id: "code-root", kind: "group", children: [] };
     const container = (ctx.container.element as HTMLElement);
 
-    // Group tokens by line
-    const lines = m.source.split("\n");
-    const lineTokens: CodeToken[][] = lines.map(() => []);
-    for (const t of m.tokens) {
-      if (t.text === "\n") continue;
-      if (t.line >= 0 && t.line < lineTokens.length) {
-        const arr = lineTokens[t.line];
-        if (arr) arr.push(t);
-      }
-    }
-
     const wrapper = document.createElement("div");
-    wrapper.className = "mini-code";
-    wrapper.style.background = theme.background;
-    wrapper.style.color = theme.foreground;
-    wrapper.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, monospace";
-    wrapper.style.fontSize = "13px";
-    wrapper.style.lineHeight = "1.5";
-    wrapper.style.padding = "12px";
-    wrapper.style.borderRadius = "6px";
-    wrapper.style.overflow = "auto";
-
-    const pre = document.createElement("pre");
-    pre.style.margin = "0";
-    const code = document.createElement("code");
-    code.className = `language-${m.language}`;
-
-    for (let li = 0; li < lines.length; li++) {
-      const lineEl = document.createElement("div");
-      lineEl.className = "mini-code-line";
-      lineEl.setAttribute("data-line", String(li + 1));
-      if (highlightLines.includes(li + 1)) lineEl.style.background = "rgba(255,235,59,0.15)";
-      const diffEntry = diff.find(d => d.line === li + 1);
-      if (diffEntry) {
-        lineEl.style.background = diffEntry.type === "add" ? "rgba(46,160,67,0.15)" : "rgba(248,81,73,0.15)";
-      }
-
-      if (lineNumbers) {
-        const ln = document.createElement("span");
-        ln.className = "mini-code-lineno";
-        ln.textContent = String(li + 1);
-        ln.style.display = "inline-block";
-        ln.style.width = "3em";
-        ln.style.textAlign = "right";
-        ln.style.marginRight = "1em";
-        ln.style.color = theme.colors.comment ?? theme.foreground;
-        ln.style.userSelect = "none";
-        lineEl.appendChild(ln);
-      }
-
-      if (diffEntry) {
-        const marker = document.createElement("span");
-        marker.textContent = diffEntry.type === "add" ? "+" : "-";
-        marker.style.marginRight = "0.5em";
-        marker.style.color = diffEntry.type === "add" ? "#2ea043" : "#f85149";
-        lineEl.appendChild(marker);
-      }
-
-      const toks = lineTokens[li] || [];
-      if (toks.length === 0) {
-        const span = document.createElement("span");
-        span.textContent = lines[li] || " ";
-        span.style.color = theme.foreground;
-        lineEl.appendChild(span);
-      } else {
-        for (const tok of toks) {
-          const span = document.createElement("span");
-          span.className = `token ${tok.scope}`;
-          span.textContent = tok.text;
-          span.style.color = theme.colors[tok.scope] || theme.foreground;
-          lineEl.appendChild(span);
-        }
-      }
-      // trailing newline placeholder
-      code.appendChild(lineEl);
-    }
-    pre.appendChild(code);
-    wrapper.appendChild(pre);
+    paintCode(wrapper, m, opts);
     container.appendChild(wrapper);
 
     const handle: RenderHandle = {
       id: root.id,
       update(input) {
-        const newModel = codeModule.parse(input, { language: m.language });
-        // re-tokenize only; re-render simplified: clear + re-render
-        wrapper.innerHTML = "";
-        const newRes = codeModule.render(newModel, ctx);
+        const newModel = codeModule.parse(input, { ...opts, language: m.language });
+        paintCode(wrapper, newModel as unknown as CodeModel, opts);
       },
       destroy() { wrapper.remove(); },
     };
