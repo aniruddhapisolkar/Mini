@@ -255,6 +255,24 @@ export function parseInlines(text: string, opts: Required<ParseOptions> = DEFAUL
       continue;
     }
 
+    // GFM bare autolink (URL)
+    if (opts.gfm) {
+      const autoUrl = text.slice(i).match(/^(https?:\/\/[^\s<]+[^\s<.,:;!?)])(?=[\s)]|$)/);
+      if (autoUrl && autoUrl[1]) {
+        flushBuf();
+        out.push({ type: "autolink", href: autoUrl[1], isEmail: false });
+        i += autoUrl[1].length;
+        continue;
+      }
+      const autoEmail = text.slice(i).match(/^([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+      if (autoEmail && autoEmail[1]) {
+        flushBuf();
+        out.push({ type: "autolink", href: "mailto:" + autoEmail[1], isEmail: true });
+        i += autoEmail[1].length;
+        continue;
+      }
+    }
+
     // entity reference
     if (ch === "&") {
       const m = text.slice(i).match(/^&(?:#[0-9]+|#[xX][0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]*);/);
