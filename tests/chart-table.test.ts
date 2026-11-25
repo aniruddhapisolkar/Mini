@@ -191,6 +191,26 @@ describe("MiniTable selection", () => {
     expect((model as any).bordered).toBe(true);
   });
 
+  it("defaults filter to empty string", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).filter).toBe("");
+  });
+
+  it("defaults sortColumn to null", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).sortColumn).toBeNull();
+  });
+
+  it("defaults sortDirection to asc", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).sortDirection).toBe("asc");
+  });
+
+  it("defaults currentPage to 0", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).currentPage).toBe(0);
+  });
+
   it("accepts striped false", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { striped: false });
     expect((model as any).striped).toBe(false);
