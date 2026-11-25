@@ -24,6 +24,11 @@ describe("MiniChart", () => {
     expect((model as any).datasets).toEqual([]);
   });
 
+  it("handles empty datasets", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [] }, { type: "bar" });
+    expect((model as any).datasets).toEqual([]);
+  });
+
   it("defaults width to 400", () => {
     const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] }, { type: "bar" });
     expect((model as any).width).toBe(400);
