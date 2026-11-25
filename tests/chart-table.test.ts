@@ -255,6 +255,12 @@ describe("MiniTable selection", () => {
     expect((model as any).filter).toBe("");
   });
 
+  it("parses with filter", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { } as any);
+    (model as any).filter = "test";
+    expect((model as any).filter).toBe("test");
+  });
+
   it("defaults sortColumn to null", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
     expect((model as any).sortColumn).toBeNull();
