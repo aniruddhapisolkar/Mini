@@ -243,6 +243,11 @@ describe("MiniTable selection", () => {
     expect((model as any).selectedRows.size).toBe(0);
   });
 
+  it("selectedRows is a Set", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { selectable: true });
+    expect((model as any).selectedRows instanceof Set).toBe(true);
+  });
+
   it("defaults aggregation to empty object", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
     expect((model as any).aggregation).toEqual({});
