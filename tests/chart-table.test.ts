@@ -159,6 +159,11 @@ describe("MiniChart", () => {
     expect((model as any).title).toBe("Sales");
   });
 
+  it("parses pie with title", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "pie", title: "Distribution" });
+    expect((model as any).title).toBe("Distribution");
+  });
+
   it("parses with multiple datasets", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }, { label: "D2", data: [3, 7] }] }, { type: "bar" });
     expect((model as any).datasets.length).toBe(2);
