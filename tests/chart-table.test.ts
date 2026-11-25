@@ -62,6 +62,7 @@ describe("MiniChart", () => {
     expect((model as any).xAxisLabel).toBe("Category");
     expect((model as any).yAxisLabel).toBe("Value");
   });
+
 });
 
 describe("MiniTable selection", () => {
