@@ -218,6 +218,11 @@ describe("MiniTable selection", () => {
     expect((model as any).selectedRows.size).toBe(0);
   });
 
+  it("defaults aggregation to empty object", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).aggregation).toEqual({});
+  });
+
   it("parses with resizable option", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { resizable: true });
     expect((model as any).resizable).toBe(true);
