@@ -78,9 +78,28 @@ function mmlNode(node: any): string {
       const body = (node.body as Expression).map(mmlNode).join("");
       return `<mstyle mathcolor="${escapeXml(node.color)}"><mrow>${body}</mrow></mstyle>`;
     }
+    case "colorbox": case "fcolorbox": {
+      const body = (node.body as Expression).map(mmlNode).join("");
+      return `<mrow>${body}</mrow>`;
+    }
     case "boxed": {
       const body = (node.body as Expression).map(mmlNode).join("");
       return `<mrow>${body}</mrow>`;
+    }
+    case "enclose": {
+      const body = (node.body as Expression).map(mmlNode).join("");
+      return `<menclose notation="${escapeXml(node.notation ?? "box")}"><mrow>${body}</mrow></menclose>`;
+    }
+    case "cancel": {
+      const body = (node.body as Expression).map(mmlNode).join("");
+      return `<menclose notation="updiagonalstrike"><mrow>${body}</mrow></menclose>`;
+    }
+    case "styling": {
+      const body = (node.body as Expression).map(mmlNode).join("");
+      return `<mstyle><mrow>${body}</mrow></mstyle>`;
+    }
+    case "includegraphics": {
+      return `<mglyph src="${escapeXml(node.src ?? "")}"/>`;
     }
     case "cr": return `<mo linebreak="newline"></mo>`;
     case "environment": case "array": case "matrix": case "cases": case "aligned": {
