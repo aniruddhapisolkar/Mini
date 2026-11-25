@@ -736,6 +736,12 @@ export class Parser {
       }
       return this.parseSupSub({ type: "group", mode: this.mode, body: nodes } as N.ParseNode);
     }
+    if (name === "pod") {
+      const body = this.parseGroupOrAtom();
+      const b = Array.isArray(body) ? body : [body];
+      // render as "( ... )"
+      return this.parseSupSub({ type: "genfrac", mode: this.mode, numerator: b, denominator: [], hasBarLine: false, leftDelim: "(", rightDelim: ")" } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
