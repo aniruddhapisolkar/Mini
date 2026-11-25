@@ -130,4 +130,52 @@ describe("Cross-module integration", () => {
       expect(mod.capabilities).toContain("a11y:aria");
     }
   });
+
+  it("all modules can be parsed", () => {
+    const chart = getModule("chart")!;
+    const table = getModule("table")!;
+    const math = getModule("math")!;
+    const diagram = getModule("diagram")!;
+    const text = getModule("text")!;
+    const code = getModule("code")!;
+
+    const chartModel = chart.parse({ labels: ["A"], datasets: [{ label: "D", data: [1] }] });
+    const tableModel = table.parse({ columns: [{ id: "x", header: "X" }], rows: [{ id: "r1", cells: { x: 1 } }] });
+    const mathModel = math.parse("x^2");
+    const diagramModel = diagram.parse("graph TD; A-->B;");
+    const textModel = text.parse("# Hello");
+    const codeModel = code.parse("const x = 1;", { language: "javascript" });
+
+    expect(chartModel.kind).toBe("chart");
+    expect(tableModel.kind).toBe("table");
+    expect(mathModel.kind).toBe("math");
+    expect(diagramModel.kind).toBe("diagram");
+    expect(textModel.kind).toBe("text");
+    expect(codeModel.kind).toBe("code");
+  });
+
+  it("all modules can be measured", () => {
+    const chart = getModule("chart")!;
+    const table = getModule("table")!;
+    const math = getModule("math")!;
+    const code = getModule("code")!;
+
+    const ctx = { container: { element: {} } } as any;
+
+    const chartModel = chart.parse({ labels: ["A"], datasets: [{ label: "D", data: [1] }] });
+    const chartSize = chart.measure(chartModel, ctx);
+    expect(chartSize.intrinsic.width).toBeGreaterThan(0);
+
+    const tableModel = table.parse({ columns: [{ id: "x", header: "X", width: 100 }], rows: [] });
+    const tableSize = table.measure(tableModel, ctx);
+    expect(tableSize.intrinsic.width).toBe(100);
+
+    const mathModel = math.parse("x^2");
+    const mathSize = math.measure(mathModel, ctx);
+    expect(mathSize.intrinsic.width).toBeGreaterThan(0);
+
+    const codeModel = code.parse("const x = 1;", { language: "javascript" });
+    const codeSize = code.measure(codeModel, ctx);
+    expect(codeSize.intrinsic.width).toBeGreaterThan(0);
+  });
 });
