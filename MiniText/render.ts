@@ -35,7 +35,11 @@ function renderBlock(b: BlockNode, opts: RenderOptions, sanitize: boolean, typo:
     case "thematicBreak":
       return `<hr class="mini-text-hr" />`;
     case "codeBlock": {
-      const lang = b.language || "text";
+      const lang = b.language || "";
+      const cls = lang ? ` class="language-${escapeHtml(lang)}"` : "";
+      if (!lang) {
+        return `<pre class="mini-text-pre"><code${cls}>${escapeHtml(b.value)}</code></pre>`;
+      }
       const theme = getTheme("github-light");
       let highlighted = "";
       try {
@@ -48,7 +52,6 @@ function renderBlock(b: BlockNode, opts: RenderOptions, sanitize: boolean, typo:
       } catch {
         highlighted = escapeHtml(b.value);
       }
-      const cls = b.language ? ` class="language-${escapeHtml(b.language)}"` : "";
       return `<pre class="mini-text-pre"><code${cls}>${highlighted}</code></pre>`;
     }
     case "htmlBlock":
