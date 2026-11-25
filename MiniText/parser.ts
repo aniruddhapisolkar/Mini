@@ -590,7 +590,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
     }
 
     // setext heading (check before paragraph)
-    if (i + 1 < end && !isBlank(lines[i + 1]!) && (/^=+\s*$/.test(lines[i + 1]!.trim()) || /^-+\s*$/.test(lines[i + 1]!.trim()))) {
+    if (i + 1 < end && !isBlank(lines[i]!) && !isBlank(lines[i + 1]!) && !isBlockStart(lines[i]!) && (/^=+\s*$/.test(lines[i + 1]!.trim()) || /^-+\s*$/.test(lines[i + 1]!.trim()))) {
       const level = /^=/.test(lines[i + 1]!.trim()) ? 1 : 2;
       // ensure underline not thematic-ish; require at least one =/-
       blocks.push({ type: "heading", level, children: parseInlines(lines[i]!.trim(), opts, refs) });
@@ -607,7 +607,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
         if (/^ {0,3}>/.test(lines[i]!)) {
           bqLines.push(lines[i]!.replace(/^ {0,3}> ?/, ""));
           i++;
-        } else if (!isBlank(lines[i]!) && bqLines.length > 0) {
+        } else if (!isBlank(lines[i]!) && bqLines.length > 0 && !isBlockStart(lines[i]!) && bqLines[bqLines.length - 1]!.trim() !== "") {
           // lazy continuation
           bqLines.push(lines[i]!);
           i++;
