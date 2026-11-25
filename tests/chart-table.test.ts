@@ -473,6 +473,20 @@ describe("MiniTable selection", () => {
     expect((model as any).columns).toEqual([]);
     expect((model as any).rows.length).toBe(1);
   });
+
+  it("measures single column table", () => {
+    const model = tableModule.parse({ columns: [{ id: "a", header: "A", width: 100 }], rows: [] });
+    const ctx = { container: { element: {} } } as any;
+    const result = tableModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(100);
+  });
+
+  it("measures empty table width", () => {
+    const model = tableModule.parse({ columns: [], rows: [] });
+    const ctx = { container: { element: {} } } as any;
+    const result = tableModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(0);
+  });
 });
 
 describe("MiniTable", () => {
