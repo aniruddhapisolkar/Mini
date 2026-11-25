@@ -113,6 +113,30 @@ export const chartModule: ModuleDescriptor = {
       const groupW = plotW / barCount;
       const barW = groupW * 0.6;
 
+      // Grid lines
+      const gridCount = 5;
+      for (let g = 0; g <= gridCount; g++) {
+        const y = padding.top + (plotH / gridCount) * g;
+        const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        gridLine.setAttribute("x1", String(padding.left));
+        gridLine.setAttribute("y1", String(y));
+        gridLine.setAttribute("x2", String(padding.left + plotW));
+        gridLine.setAttribute("y2", String(y));
+        gridLine.setAttribute("stroke", "#eee");
+        gridLine.setAttribute("stroke-width", "1");
+        svg.appendChild(gridLine);
+
+        // Y-axis tick label
+        const tickVal = maxVal * (1 - g / gridCount);
+        const tickText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        tickText.setAttribute("x", String(padding.left - 5));
+        tickText.setAttribute("y", String(y + 4));
+        tickText.setAttribute("text-anchor", "end");
+        tickText.setAttribute("font-size", "9");
+        tickText.textContent = tickVal.toFixed(0);
+        svg.appendChild(tickText);
+      }
+
       // Axes
       const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
       xAxis.setAttribute("x1", String(padding.left));
