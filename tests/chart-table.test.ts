@@ -473,6 +473,17 @@ describe("MiniTable selection", () => {
     expect(result.intrinsic.width).toBe(240); // 2 * 120
   });
 
+  it("measures with single row", () => {
+    const model = tableModule.parse({
+      columns: [{ id: "a", header: "A", width: 100 }],
+      rows: [{ id: "r1", cells: { a: 1 } }],
+    });
+    const ctx = { container: { element: {} } } as any;
+    const result = tableModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(100);
+    expect(result.intrinsic.height).toBeGreaterThan(0);
+  });
+
   it("handles empty table", () => {
     const model = tableModule.parse({ columns: [], rows: [] });
     const ctx = { container: { element: {} } } as any;
