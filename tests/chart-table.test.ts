@@ -143,6 +143,14 @@ describe("MiniChart", () => {
     expect(result.min.height).toBe(80);
   });
 
+  it("measure returns intrinsic for line chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "line", width: 300, height: 200 });
+    const ctx = { container: { element: {} } } as any;
+    const result = chartModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(300);
+    expect(result.intrinsic.height).toBe(200);
+  });
+
   it("measure returns bbox", () => {
     const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] }, { type: "bar", width: 400, height: 300 });
     const ctx = { container: { element: {} } } as any;
