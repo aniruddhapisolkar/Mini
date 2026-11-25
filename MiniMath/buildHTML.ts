@@ -137,6 +137,21 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       return `<span class="rule" style="display:inline-block;width:${node.width}em;height:${node.height}em;vertical-align:${node.shift ?? 0}em;background:currentColor"></span>`;
     }
     case "cr": return `<br/>`;
+    case "includegraphics": {
+      const src = escapeHtml(node.src ?? "");
+      const opts = node.opts ?? "";
+      return `<img src="${src}" alt="" class="minicgraphics" data-opts="${escapeHtml(opts)}" style="max-width:100%" />`;
+    }
+    case "reflectbox": {
+      const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
+      return `<span style="display:inline-block;transform:scaleX(-1)">${body}</span>`;
+    }
+    case "lap": {
+      const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
+      const side = node.side;
+      const margin = side === "l" ? "margin-left:-100%" : side === "r" ? "margin-right:-100%" : "";
+      return `<span class="mlap" style="${margin}">${body}</span>`;
+    }
     case "href": {
       const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
       return `<a href="${escapeHtml(node.href)}" class="mhref">${body}</a>`;

@@ -621,6 +621,71 @@ export class Parser {
       const b = Array.isArray(body) ? body : [body];
       return this.parseSupSub({ type: "environment", mode: this.mode, envName: "subarray", body: [b] } as N.ParseNode);
     }
+    if (name === "includegraphics") {
+      // \includegraphics[opts]{src}
+      let opts = "";
+      if (this.peek().type === "group_open" && this.peek().value === "[") {
+        // bracket not in lexer; handle as group_open with [ text
+      }
+      // parse optional [..] if present as text token
+      if (this.peek().type === "text" && this.peek().value === "[") {
+        this.next();
+        const inner = this.parseExpression(new Set(["]"]));
+        if (this.peek().type === "text" && this.peek().value === "]") this.next();
+        opts = inner.map(n => (n as any).text ?? "").join("");
+      }
+      let src = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        src = inner.map(n => (n as any).text ?? "").join("");
+      }
+      return this.parseSupSub({ type: "includegraphics", mode: this.mode, src, opts } as N.ParseNode);
+    }
+    if (name === "reflectbox") {
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "reflectbox", mode: this.mode, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
+    if (name === "llap" || name === "rlap" || name === "clap") {
+      const body = this.parseGroupOrAtom();
+      const b = Array.isArray(body) ? body : [body];
+      return this.parseSupSub({ type: "lap", mode: this.mode, side: name[0] as "l" | "r" | "c", body: b } as N.ParseNode);
+    }
+    // \def\name{...} / \newcommand{\name}{...}
+    if (name === "def" || name === "newcommand" || name === "renewcommand" || name === "providecommand") {
+      let cmdName = "";
+      if (name === "def") {
+        // \def\foo#1{...}
+        if (this.peek().type === "command") { cmdName = this.next().value; }
+      } else {
+        if (this.peek().type === "group_open") {
+          this.next();
+          const inner = this.parseExpression();
+          this.expect("group_close");
+          cmdName = inner.map(n => (n as any).text ?? "").join("").replace(/^\\/, "");
+        }
+      }
+      // skip optional arg count [n]
+      if (this.peek().type === "text" && this.peek().value === "[") {
+        this.next();
+        this.parseExpression(new Set(["]"]));
+        if (this.peek().type === "text" && this.peek().value === "]") this.next();
+      }
+      // parse body
+      let body: N.Expression = [];
+      if (this.peek().type === "group_open") {
+        this.next();
+        body = this.parseExpression();
+        this.expect("group_close");
+      }
+      // register macro (naive: store as string)
+      if (cmdName) {
+        if (!this.options.macros) this.options.macros = {};
+        this.options.macros[cmdName] = body.map(n => (n as any).text ?? "").join("");
+      }
+      return null;
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
