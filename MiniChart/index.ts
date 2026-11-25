@@ -32,6 +32,7 @@ interface ChartModel extends SemanticModel {
   donutRatio?: number;
   legendPosition?: "top" | "bottom" | "left" | "right";
   stacked?: boolean;
+  responsive?: boolean;
   width: number;
   height: number;
 }
@@ -56,7 +57,7 @@ export const chartModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "render:canvas", "measure:intrinsic", "compose:embed", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg", "canvas"],
   parse(input: unknown, options?: unknown): ChartModel {
-    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string; xAxisLabel?: string; yAxisLabel?: string; donutRatio?: number; legendPosition?: "top" | "bottom" | "left" | "right"; stacked?: boolean };
+    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string; xAxisLabel?: string; yAxisLabel?: string; donutRatio?: number; legendPosition?: "top" | "bottom" | "left" | "right"; stacked?: boolean; responsive?: boolean };
     const raw = (input ?? {}) as { labels?: string[]; datasets?: ChartDataset[] };
     const type = opts.type ?? "bar";
     const labels = raw.labels ?? [];
@@ -78,6 +79,7 @@ export const chartModule: ModuleDescriptor = {
       ...(opts.donutRatio !== undefined ? { donutRatio: opts.donutRatio } : {}),
       ...(opts.legendPosition !== undefined ? { legendPosition: opts.legendPosition } : {}),
       ...(opts.stacked !== undefined ? { stacked: opts.stacked } : {}),
+      ...(opts.responsive !== undefined ? { responsive: opts.responsive } : {}),
       width: opts.width ?? 400,
       height: opts.height ?? 300,
     };
@@ -87,8 +89,14 @@ export const chartModule: ModuleDescriptor = {
     const root: RenderNode = { id: "chart-root", kind: "chart", children: [] };
     const container = document.createElement("div");
     container.className = "mini-chart";
-    container.style.width = `${m.width}px`;
-    container.style.height = `${m.height}px`;
+    if (m.responsive) {
+      container.style.width = "100%";
+      container.style.height = "auto";
+      container.style.maxWidth = `${m.width}px`;
+    } else {
+      container.style.width = `${m.width}px`;
+      container.style.height = `${m.height}px`;
+    }
     container.style.position = "relative";
     // Dark mode support via CSS variables
     container.style.setProperty("--mini-chart-bg", "var(--mini-bg, #fff)");
