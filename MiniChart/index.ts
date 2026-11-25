@@ -31,6 +31,7 @@ interface ChartModel extends SemanticModel {
   yAxisLabel?: string;
   donutRatio?: number;
   legendPosition?: "top" | "bottom" | "left" | "right";
+  stacked?: boolean;
   width: number;
   height: number;
 }
@@ -55,7 +56,7 @@ export const chartModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "render:canvas", "measure:intrinsic", "compose:embed", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg", "canvas"],
   parse(input: unknown, options?: unknown): ChartModel {
-    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string; xAxisLabel?: string; yAxisLabel?: string; donutRatio?: number; legendPosition?: "top" | "bottom" | "left" | "right" };
+    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string; xAxisLabel?: string; yAxisLabel?: string; donutRatio?: number; legendPosition?: "top" | "bottom" | "left" | "right"; stacked?: boolean };
     const raw = (input ?? {}) as { labels?: string[]; datasets?: ChartDataset[] };
     const type = opts.type ?? "bar";
     const labels = raw.labels ?? [];
@@ -76,6 +77,7 @@ export const chartModule: ModuleDescriptor = {
       ...(opts.yAxisLabel !== undefined ? { yAxisLabel: opts.yAxisLabel } : {}),
       ...(opts.donutRatio !== undefined ? { donutRatio: opts.donutRatio } : {}),
       ...(opts.legendPosition !== undefined ? { legendPosition: opts.legendPosition } : {}),
+      ...(opts.stacked !== undefined ? { stacked: opts.stacked } : {}),
       width: opts.width ?? 400,
       height: opts.height ?? 300,
     };
