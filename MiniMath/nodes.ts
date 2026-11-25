@@ -4,7 +4,7 @@ export type ParseNodeType =
   | "ord" | "text" | "mathord" | "operator" | "bin" | "rel" | "open" | "close"
   | "punct" | "inner" | "genfrac" | "sqrt" | "supsub" | "accent" | "overline"
   | "underline" | "phantom" | "sizing" | "styling" | "spacing" | "kern"
-  | "environment" | "delim" | "left" | "right" | "middle" | "leftright" | "color" | "href"
+  | "group" | "environment" | "delim" | "left" | "right" | "middle" | "leftright" | "color" | "href"
   | "boxed" | "rule" | "vcenter" | "smash" | "raisebox" | "hbox" | "tag"
   | "macro" | "cr" | "binom" | "overbrace" | "underbrace" | "not" | "cancel"
   | "operatorname" | "textop" | "array" | "matrix" | "cases" | "aligned"

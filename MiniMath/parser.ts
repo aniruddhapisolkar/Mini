@@ -570,6 +570,28 @@ export class Parser {
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "raisebox", mode: this.mode, amount: amt, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
+    if (name === "mathchoice") {
+      const d = this.parseGroupOrAtom();
+      const t = this.parseGroupOrAtom();
+      const sc = this.parseGroupOrAtom();
+      const scs = this.parseGroupOrAtom();
+      // Default to display style (first)
+      const dd = Array.isArray(d) ? d : [d];
+      return this.parseSupSub({ type: "group", mode: this.mode, body: dd } as N.ParseNode);
+    }
+    if (name === "mathpalette") {
+      // \mathpalette{fn}{arg}: consume fn and arg, render arg
+      this.parseGroupOrAtom();
+      const arg = this.parseGroupOrAtom();
+      const a = Array.isArray(arg) ? arg : [arg];
+      return this.parseSupSub({ type: "group", mode: this.mode, body: a } as N.ParseNode);
+    }
+    if (name === "subarray") {
+      // handled as environment already; if invoked as command, parse group
+      const body = this.parseGroupOrAtom();
+      const b = Array.isArray(body) ? body : [body];
+      return this.parseSupSub({ type: "environment", mode: this.mode, envName: "subarray", body: [b] } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
