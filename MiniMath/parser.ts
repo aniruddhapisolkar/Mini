@@ -866,7 +866,10 @@ export class Parser {
         this.expect("group_close");
         raw = inner.map(n => (n as any).text ?? "").join("");
       }
-      const transformed = raw.replace(/([A-Za-z)\]])(\d+)/g, "$1_{$2}");
+      const transformed = raw
+        .replace(/->/g, "\\rightarrow ")
+        .replace(/=>/g, "\\Rightarrow ")
+        .replace(/([A-Za-z)\]])(\d+)/g, "$1_{$2}");
       const p = new Parser(transformed || raw, this.mode, { ...this.options, macros: undefined });
       const nodes = p.parse();
       return this.parseSupSub({ type: "styling", mode: this.mode, style: "mathrm", body: nodes } as N.ParseNode);
