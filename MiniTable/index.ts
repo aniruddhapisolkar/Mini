@@ -181,7 +181,27 @@ export const tableModule: ModuleDescriptor = {
         handle.style.height = "100%";
         handle.style.cursor = "col-resize";
         handle.style.userSelect = "none";
+        handle.style.background = "transparent";
         th.style.position = "relative";
+        let startX = 0;
+        let startWidth = 0;
+        handle.addEventListener("mousedown", (e) => {
+          startX = (e as MouseEvent).clientX;
+          startWidth = th.offsetWidth;
+          const onMove = (ev: MouseEvent) => {
+            const newWidth = startWidth + (ev.clientX - startX);
+            if (newWidth > 30) {
+              th.style.width = `${newWidth}px`;
+              col.width = newWidth;
+            }
+          };
+          const onUp = () => {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+          };
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup", onUp);
+        });
         th.appendChild(handle);
       }
       headerRow.appendChild(th);
