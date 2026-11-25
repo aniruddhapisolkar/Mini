@@ -24,10 +24,26 @@ function normalizeNewlines(src: string): string {
   return src.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 
+function expandTabs(line: string): string {
+  let result = "";
+  let col = 0;
+  for (const ch of line) {
+    if (ch === "\t") {
+      const spaces = 4 - (col % 4);
+      result += " ".repeat(spaces);
+      col += spaces;
+    } else {
+      result += ch;
+      col++;
+    }
+  }
+  return result;
+}
+
 function splitLines(src: string): string[] {
   const lines = normalizeNewlines(src).split("\n");
-  // drop trailing empty from final newline? keep; handle in parser
-  return lines;
+  // expand tabs to 4-space tab stops (CommonMark)
+  return lines.map(expandTabs);
 }
 
 function isBlank(line: string): boolean {
