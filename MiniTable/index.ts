@@ -50,6 +50,7 @@ interface TableModel extends SemanticModel {
   columnOrder: string[];
   expandable: boolean;
   expandedRows: Set<string>;
+  groupBy: string[];
 }
 
 // ---- Helpers ----
@@ -66,6 +67,21 @@ function sortRows(rows: TableRow[], col: string | null, dir: "asc" | "desc"): Ta
     return String(va).localeCompare(String(vb));
   });
   return dir === "desc" ? sorted.reverse() : sorted;
+}
+
+function groupRows(rows: TableRow[], groupBy: string[]): Map<string, TableRow[]> {
+  const groups = new Map<string, TableRow[]>();
+  if (groupBy.length === 0) {
+    // No grouping: single group with empty key (no header rendered)
+    groups.set("", rows);
+    return groups;
+  }
+  for (const row of rows) {
+    const key = groupBy.map(col => String(row.cells[col] ?? "")).join("|");
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(row);
+  }
+  return groups;
 }
 
 function filterRows(rows: TableRow[], filter: string): TableRow[] {
@@ -85,7 +101,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean; columnVisibility?: Record<string, boolean>; columnOrder?: string[]; expandable?: boolean };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean; columnVisibility?: Record<string, boolean>; columnOrder?: string[]; expandable?: boolean; groupBy?: string[] };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -118,6 +134,7 @@ export const tableModule: ModuleDescriptor = {
       columnOrder: opts.columnOrder ?? [],
       expandable: opts.expandable ?? false,
       expandedRows: new Set(),
+      groupBy: opts.groupBy ?? [],
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -314,7 +331,24 @@ export const tableModule: ModuleDescriptor = {
     } else {
       const start = m.currentPage * m.pageSize;
       const pageRows = sorted.slice(start, start + m.pageSize);
-      pageRows.forEach((row, ri) => {
+
+      // Always group (single group when no groupBy)
+      const groups = groupRows(pageRows, m.groupBy.length > 0 ? m.groupBy : []);
+      groups.forEach((groupRows, key) => {
+        // Group header (only when grouping)
+        if (m.groupBy.length > 0 && key !== "") {
+          const groupTr = document.createElement("tr");
+          groupTr.style.backgroundColor = "#e0e0e0";
+          const groupTd = document.createElement("td");
+          groupTd.colSpan = visibleCols.length + (m.selectable ? 1 : 0) + (m.expandable ? 1 : 0);
+          groupTd.style.padding = "8px";
+          groupTd.style.fontWeight = "bold";
+          groupTd.textContent = key;
+          groupTr.appendChild(groupTd);
+          tbody.appendChild(groupTr);
+        }
+
+        groupRows.forEach((row, ri) => {
         const tr = document.createElement("tr");
         if (m.striped && ri % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
         if (m.expandable) {
@@ -380,7 +414,8 @@ export const tableModule: ModuleDescriptor = {
           tbody.appendChild(expRow);
         }
       });
-    }
+      }); // closes groups.forEach
+    } // closes if groupBy
     table.appendChild(tbody);
 
     // Footer
