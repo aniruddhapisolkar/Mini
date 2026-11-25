@@ -96,3 +96,17 @@ describe("MiniDiagram state", () => {
     expect(svg).toContain("<svg");
   });
 });
+
+describe("MiniDiagram er", () => {
+  it("parses er diagram", () => {
+    const m = parseDiagram("erDiagram\nCUSTOMER ||--o{ ORDER : places");
+    expect(m.diagramType).toBe("er");
+    expect(m.nodes.length).toBe(2);
+    expect(m.edges.length).toBe(1);
+  });
+  it("renders er SVG", () => {
+    const m = parseDiagram("erDiagram\nA ||--o{ B : has");
+    const svg = renderSVG(m);
+    expect(svg).toContain("<svg");
+  });
+});

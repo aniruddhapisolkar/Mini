@@ -12,7 +12,7 @@ import { renderToHTML } from "../MiniMath/index.js";
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
 interface Subgraph { id: string; title: string; nodes: string[]; }
-interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap" | "pie" | "gantt" | "state"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; pie?: { title: string; slices: { label: string; value: number }[]; }; gantt?: { title: string; tasks: { name: string; id: string; start: number; duration: number }[]; }; }
+interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap" | "pie" | "gantt" | "state" | "er"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; pie?: { title: string; slices: { label: string; value: number }[]; }; gantt?: { title: string; tasks: { name: string; id: string; start: number; duration: number }[]; }; er?: { entities: string[]; relations: { from: string; to: string; label: string; cardinality: string }[]; }; }
 
 function parseNodeToken(tok: string): { id: string; label: string; shape: string } {
   tok = tok.trim();
@@ -44,6 +44,9 @@ export function parseDiagram(source: string): DiagramModel {
       if (n.label === "[*]" || n.id === "[*]") { n.shape = "circle"; n.label = ""; n.w = 20; n.h = 20; }
     }
     return m;
+  }
+  if (/^erDiagram\b/i.test(trimmed)) {
+    return parseErDiagram(trimmed);
   }
   if (/^gantt\b/i.test(trimmed)) {
     return parseGanttDiagram(trimmed);
@@ -204,6 +207,27 @@ export function parseGanttDiagram(source: string): DiagramModel {
   return { kind: "diagram", version: 1, diagramType: "gantt", direction: "TD", layout: "layered", nodes: [], edges: [], subgraphs: [], gantt: { title, tasks } } as any;
 }
 
+export function parseErDiagram(source: string): DiagramModel {
+  const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
+  const entities = new Set<string>();
+  const relations: { from: string; to: string; label: string; cardinality: string }[] = [];
+  for (const line of lines) {
+    if (/^erDiagram\b/i.test(line)) continue;
+    const m = line.match(/^(\w+)\b.*?\b(\w+)\s*:\s*(.+)$/);
+    if (m) {
+      const from = m[1]!, to = m[2]!;
+      entities.add(from); entities.add(to);
+      relations.push({ from, to, label: m[3]!.trim(), cardinality: "" });
+      continue;
+    }
+    const em = line.match(/^(\w+)\s*\{/); if (em) { entities.add(em[1]!); continue; }
+  }
+  for (const r of relations) { entities.add(r.from); entities.add(r.to); }
+  const nodeList = Array.from(entities).map((e) => ({ id: e, label: e, shape: "rect", x: 0, y: 0, w: Math.max(80, e.length*8+24), h: 32 }));
+  const edges: DiagramEdge[] = relations.map(r => ({ from: r.from, to: r.to, label: r.label, style: "solid" as const, arrow: true }));
+  return { kind: "diagram", version: 1, diagramType: "er", direction: "TD", layout: "layered", nodes: nodeList, edges, subgraphs: [], er: { entities: Array.from(entities), relations } } as any;
+}
+
 export function parseSequenceDiagram(source: string): DiagramModel {
   const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
   const participants: string[] = [];
@@ -298,6 +322,7 @@ export function renderSVG(model: DiagramModel): string {
   if (model.diagramType === "sequence") return renderSequenceSVG(model);
   if (model.diagramType === "pie") return renderPieSVG(model);
   if (model.diagramType === "gantt") return renderGanttSVG(model);
+  if (model.diagramType === "er") return renderErSVG(model);
   layout(model);
   const nodes = model.nodes;
   const byId = new Map(nodes.map(n => [n.id, n]));
@@ -436,6 +461,36 @@ function renderGanttSVG(model: any): string {
   return parts.join("");
 }
 
+function renderErSVG(model: any): string {
+  const er = model.er;
+  const nodes = model.nodes;
+  const byId = new Map(nodes.map((n: any) => [n.id, n]));
+  layout(model);
+  let maxX = 0, maxY = 0;
+  for (const n of nodes) { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); }
+  const w = Math.max(200, maxX + 40);
+  const h = Math.max(120, maxY + 40);
+  const parts: string[] = [];
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" class="mini-diagram mini-er">`);
+  for (const e of er.relations) {
+    const a = byId.get(e.from) as any, b = byId.get(e.to) as any;
+    if (!a || !b) continue;
+    const ax = a.x + a.w/2, ay = a.y + a.h/2;
+    const bx = b.x + b.w/2, by = b.y + b.h/2;
+    parts.push(`<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow)"/>`);
+    if (e.label) {
+      const mx = (ax+bx)/2, my = (ay+by)/2;
+      parts.push(`<text x="${mx}" y="${my-4}" text-anchor="middle" font-size="10" fill="currentColor">${escapeXml(e.label)}</text>`);
+    }
+  }
+  for (const n of nodes) {
+    parts.push(`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="4" ry="4" fill="none" stroke="currentColor" stroke-width="1.5"/>`);
+    parts.push(`<text x="${n.x + n.w/2}" y="${n.y + n.h/2 + 4}" text-anchor="middle" font-size="12" fill="currentColor">${escapeXml(n.label)}</text>`);
+  }
+  parts.push(`</svg>`);
+  return parts.join("");
+}
+
 function escapeXml(s: string): string { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
 export const diagramModule: ModuleDescriptor = {
@@ -472,6 +527,14 @@ export const diagramModule: ModuleDescriptor = {
   },
   measure(model: SemanticModel, _ctx: RenderContext, constraints?: MeasureConstraints): MeasureResult {
     const m = model as DiagramModel;
+    if (m.diagramType === "er") {
+      layout(m);
+      let maxX = 0, maxY = 0;
+      for (const n of m.nodes) { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); }
+      const w = Math.max(200, maxX + 40);
+      const h = Math.max(120, maxY + 40);
+      return { intrinsic: { width: w, height: h }, min: { width: 120, height: 60 }, bbox: { x: 0, y: 0, width: w, height: h } };
+    }
     if (m.diagramType === "gantt") {
       const tasks = (m as any).gantt?.tasks ?? [];
       const total = Math.max(...tasks.map((t: any) => t.start + t.duration), 1);
