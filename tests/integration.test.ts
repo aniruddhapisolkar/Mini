@@ -153,6 +153,22 @@ describe("Cross-module integration", () => {
     }
   });
 
+  it("chart has perf capabilities", () => {
+    const chart = getModule("chart")!;
+    expect(chart.capabilities).toContain("perf:stream");
+    expect(chart.capabilities).toContain("perf:incremental");
+  });
+
+  it("table has virtualization capability", () => {
+    const table = getModule("table")!;
+    expect(table.capabilities).toContain("perf:virtualize");
+  });
+
+  it("text has streaming capability", () => {
+    const text = getModule("text")!;
+    expect(text.capabilities).toContain("perf:stream");
+  });
+
   it("all modules can be parsed", () => {
     const chart = getModule("chart")!;
     const table = getModule("table")!;
