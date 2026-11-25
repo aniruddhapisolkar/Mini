@@ -314,6 +314,14 @@ describe("MiniTable selection", () => {
     expect((model as any).filter).toBe("test");
   });
 
+  it("parses with sortColumn", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    (model as any).sortColumn = "name";
+    (model as any).sortDirection = "desc";
+    expect((model as any).sortColumn).toBe("name");
+    expect((model as any).sortDirection).toBe("desc");
+  });
+
   it("defaults sortColumn to null", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
     expect((model as any).sortColumn).toBeNull();
