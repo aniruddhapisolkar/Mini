@@ -55,8 +55,7 @@ export class TextProcessor {
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+      .replace(/"/g, "&quot;");
   }
 
   /** Normalize whitespace for measurement/layout (collapse runs, trim). */
