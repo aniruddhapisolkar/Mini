@@ -511,19 +511,33 @@ export const chartModule: ModuleDescriptor = {
 
     // Legend for multi-dataset charts
     if (m.datasets.length > 1) {
-      const legendY = m.height - 12;
+      const pos = m.legendPosition ?? "bottom";
+      let legendX = padding.left;
+      let legendY = m.height - 12;
+
+      if (pos === "top") {
+        legendY = 12;
+      } else if (pos === "left") {
+        legendX = 5;
+        legendY = padding.top;
+      } else if (pos === "right") {
+        legendX = m.width - 80;
+        legendY = padding.top;
+      }
+
       m.datasets.forEach((ds, i) => {
-        const x = padding.left + i * 90;
+        const x = pos === "left" || pos === "right" ? legendX : legendX + i * 90;
+        const y = pos === "left" || pos === "right" ? legendY + i * 16 : legendY;
         const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
         rect.setAttribute("x", String(x));
-        rect.setAttribute("y", String(legendY - 8));
+        rect.setAttribute("y", String(y - 8));
         rect.setAttribute("width", "12");
         rect.setAttribute("height", "8");
         rect.setAttribute("fill", ds.color ?? resolveColor(i));
         svg.appendChild(rect);
         const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
         text.setAttribute("x", String(x + 16));
-        text.setAttribute("y", String(legendY));
+        text.setAttribute("y", String(y));
         text.setAttribute("font-size", "10");
         text.textContent = ds.label;
         svg.appendChild(text);
