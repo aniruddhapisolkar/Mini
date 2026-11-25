@@ -297,6 +297,40 @@ export const chartModule: ModuleDescriptor = {
           svg.appendChild(circle);
         });
       });
+    } else if (m.type === "mixed") {
+      // Mixed chart: render each dataset according to its type
+      const barCount = m.labels.length || 1;
+      const groupW = plotW / barCount;
+      const barW = groupW * 0.6;
+      m.datasets.forEach((ds, di) => {
+        const chartType = ds.type ?? "bar";
+        if (chartType === "bar") {
+          ds.data.forEach((val, i) => {
+            const x = padding.left + groupW * i + (groupW - barW) / 2;
+            const h = (Math.abs(val) / maxVal) * plotH;
+            const y = padding.top + plotH - h;
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", String(x));
+            rect.setAttribute("y", String(y));
+            rect.setAttribute("width", String(barW));
+            rect.setAttribute("height", String(h));
+            rect.setAttribute("fill", ds.color ?? resolveColor(di));
+            svg.appendChild(rect);
+          });
+        } else if (chartType === "line" || chartType === "area") {
+          const points = ds.data.map((val, i) => {
+            const x = padding.left + groupW * i + groupW / 2;
+            const y = padding.top + plotH - (val / maxVal) * plotH;
+            return `${x},${y}`;
+          }).join(" ");
+          const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+          polyline.setAttribute("points", points);
+          polyline.setAttribute("fill", chartType === "area" ? (ds.color ?? resolveColor(di)) + "33" : "none");
+          polyline.setAttribute("stroke", ds.color ?? resolveColor(di));
+          polyline.setAttribute("stroke-width", "2");
+          svg.appendChild(polyline);
+        }
+      });
     } else if (m.type === "scatter") {
       // Scatter chart
       m.datasets.forEach((ds, di) => {
