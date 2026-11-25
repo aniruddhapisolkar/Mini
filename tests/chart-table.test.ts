@@ -82,6 +82,26 @@ describe("MiniTable selection", () => {
     expect((model as any).rowHeight).toBe(24);
     expect((model as any).viewportHeight).toBe(200);
   });
+
+  it("defaults pageSize to 25", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).pageSize).toBe(25);
+  });
+
+  it("accepts custom pageSize", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { pageSize: 50 });
+    expect((model as any).pageSize).toBe(50);
+  });
+
+  it("measures with multiple columns", () => {
+    const model = tableModule.parse({
+      columns: [{ id: "a", header: "A", width: 100 }, { id: "b", header: "B", width: 200 }, { id: "c", header: "C", width: 150 }],
+      rows: [{ id: "r1", cells: { a: 1, b: 2, c: 3 } }],
+    });
+    const ctx = { container: { element: {} } } as any;
+    const result = tableModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(450);
+  });
 });
 
 describe("MiniTable", () => {
