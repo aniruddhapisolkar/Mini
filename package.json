@@ -53,6 +53,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "build:prod": "tsc -p tsconfig.prod.json",
     "build:bundle": "node scripts/bundle.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
