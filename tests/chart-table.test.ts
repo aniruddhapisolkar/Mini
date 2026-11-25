@@ -208,6 +208,11 @@ describe("MiniChart", () => {
     expect((model as any).donutRatio).toBe(0.7);
   });
 
+  it("parses doughnut with default ratio", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "doughnut" });
+    expect((model as any).donutRatio).toBeUndefined();
+  });
+
   it("defaults donutRatio to undefined", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "doughnut" });
     expect((model as any).donutRatio).toBeUndefined();
