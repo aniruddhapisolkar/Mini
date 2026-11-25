@@ -5,7 +5,7 @@ export type ParseNodeType =
   | "punct" | "inner" | "genfrac" | "sqrt" | "supsub" | "accent" | "overline"
   | "underline" | "phantom" | "sizing" | "styling" | "spacing" | "kern"
   | "group" | "environment" | "delim" | "left" | "right" | "middle" | "leftright" | "color" | "href"
-  | "boxed" | "fcolorbox" | "rule" | "vcenter" | "smash" | "raisebox" | "hbox" | "tag" | "colorbox" | "includegraphics"
+  | "boxed" | "fcolorbox" | "sout" | "rule" | "vcenter" | "smash" | "raisebox" | "hbox" | "tag" | "colorbox" | "includegraphics"
   | "macro" | "cr" | "binom" | "overbrace" | "underbrace" | "not" | "cancel"
   | "operatorname" | "textop" | "array" | "matrix" | "cases" | "aligned"
   | "stack" | "lap" | "reflectbox" | "includegraphics" | "html" | "mathchoice";

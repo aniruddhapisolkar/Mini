@@ -753,6 +753,10 @@ export class Parser {
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "fcolorbox", mode: this.mode, border, bg, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
+    if (name === "sout") {
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "sout", mode: this.mode, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
