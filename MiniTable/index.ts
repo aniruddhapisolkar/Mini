@@ -243,6 +243,10 @@ export const tableModule: ModuleDescriptor = {
       const endIndex = Math.min(startIndex + visibleCount, sorted.length);
       const offsetY = startIndex * m.rowHeight;
 
+      // Make table container scrollable
+      container.style.maxHeight = `${m.viewportHeight}px`;
+      container.style.overflow = "auto";
+
       // Spacer for scroll position
       const spacerTop = document.createElement("tr");
       const spacerTd = document.createElement("td");
