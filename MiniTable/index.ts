@@ -497,7 +497,7 @@ export const tableModule: ModuleDescriptor = {
     const handle: RenderHandle = {
       id: root.id,
       update(input) {
-        const newModel = tableModule.parse(input, { pageSize: m.pageSize, striped: m.striped, bordered: m.bordered });
+        const newModel = tableModule.parse(input, { pageSize: m.pageSize, striped: m.striped, bordered: m.bordered, selectable: m.selectable, resizable: m.resizable, showFooter: m.showFooter, footerCells: m.footerCells, aggregation: m.aggregation, highlightFilter: m.highlightFilter, columnVisibility: m.columnVisibility, columnOrder: m.columnOrder, expandable: m.expandable, virtualized: m.virtualized, rowHeight: m.rowHeight, viewportHeight: m.viewportHeight });
         container.innerHTML = "";
         tableModule.render(newModel, ctx);
       },
