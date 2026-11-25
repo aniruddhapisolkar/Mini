@@ -137,6 +137,18 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       return `<span class="rule" style="display:inline-block;width:${node.width}em;height:${node.height}em;vertical-align:${node.shift ?? 0}em;background:currentColor"></span>`;
     }
     case "cr": return `<br/>`;
+    case "href": {
+      const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
+      return `<a href="${escapeHtml(node.href)}" class="mhref">${body}</a>`;
+    }
+    case "html": {
+      const body = Array.isArray(node.body) ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : "";
+      const meta = node.meta || {};
+      const cls = meta.kind === "htmlClass" ? ` class="${escapeHtml(meta.arg)}"` : "";
+      const id = meta.kind === "htmlId" ? ` id="${escapeHtml(meta.arg)}"` : "";
+      const style = meta.kind === "htmlStyle" ? ` style="${escapeHtml(meta.arg)}"` : "";
+      return `<span${cls}${id}${style}>${body}</span>`;
+    }
     case "hline": return `<span class="hline" style="display:block;border-bottom:1px solid currentColor;margin:0.15em 0;width:100%"></span>`;
     case "tag": {
       const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");

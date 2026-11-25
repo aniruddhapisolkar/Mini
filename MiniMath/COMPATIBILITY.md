@@ -22,6 +22,8 @@ Reference: KaTeX v0.19.1
 - Operators: \sum, \prod, \int, \iint, \iiint, \oint, \lim, \sin, \cos, etc.
 - Relations, binary operators, arrows, misc symbols
 - \text, \mbox, \hbox, \operatorname
+- \href, \htmlClass, \htmlId, \htmlStyle, \htmlData
+- \strut
 - \color, \boxed, \fbox, \framebox
 - \phantom, \vphantom, \hphantom
 - \smash, \raisebox, \vcenter

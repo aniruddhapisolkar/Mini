@@ -112,8 +112,24 @@ export const mathModule: ModuleDescriptor = {
   measure(model: SemanticModel, _ctx: RenderContext, constraints?: MeasureConstraints): MeasureResult {
     const m = model as MathModel;
     const latex = m.latex;
-    const charW = 8;
-    const w = Math.max(8, latex.length * charW);
+    // Font-metric-aware width estimate: use canvas measureText when available, else char heuristic.
+    let w = 8;
+    try {
+      if (typeof document !== "undefined") {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.font = "16px serif";
+          w = Math.max(8, ctx.measureText(latex.replace(/\\[a-zA-Z]+/g, "x")).width);
+        } else {
+          w = Math.max(8, latex.length * 8);
+        }
+      } else {
+        w = Math.max(8, latex.length * 8);
+      }
+    } catch {
+      w = Math.max(8, latex.length * 8);
+    }
     const h = 16;
     const avail = constraints?.availableWidth;
     const width = avail ? Math.min(w, avail) : w;

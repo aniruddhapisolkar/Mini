@@ -532,6 +532,44 @@ export class Parser {
       const b = Array.isArray(body) ? body : [body];
       return this.parseSupSub(b.length ? b[0]! : { type: "mathord", mode: this.mode, text: "" } as N.ParseNode);
     }
+    if (name === "href") {
+      // \href{url}{content}
+      let url = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        url = inner.map(n => (n as any).text ?? "").join("");
+      }
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "href", mode: this.mode, href: url, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
+    if (name === "htmlClass" || name === "htmlId" || name === "htmlStyle" || name === "htmlData") {
+      // consume class/id/style arg
+      let arg = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        arg = inner.map(n => (n as any).text ?? "").join("");
+      }
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "html", mode: this.mode, html: "", meta: { kind: name, arg }, body: Array.isArray(body) ? body : [body] } as any);
+    }
+    if (name === "strut") {
+      return this.parseSupSub({ type: "rule", mode: this.mode, width: 0, height: 0.75, shift: -0.25 } as N.ParseNode);
+    }
+    if (name === "raisebox") {
+      const amt = this.parseDimension();
+      let height: number | undefined;
+      let depth: number | undefined;
+      if (this.peek().type === "group_open") {
+        // optional [height][depth] before main group? KaTeX: \raisebox{amount}[height][depth]{content}
+        // We only support amount here; consume optional bracket groups as no-ops
+      }
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "raisebox", mode: this.mode, amount: amt, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
