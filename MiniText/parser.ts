@@ -783,6 +783,8 @@ function parseList(lines: string[], opts: Required<ParseOptions>, refs: Map<stri
       // strip up to 4 spaces indent
       itemLines.push(lines[j]!.replace(/^ {0,4}/, ""));
     }
+    // trim trailing blank lines (do not count as internal blank)
+    while (itemLines.length > 1 && itemLines[itemLines.length - 1] === "") itemLines.pop();
     if (itemLines.some(l => l === "")) hasInternalBlank = true;
     // task list check
     let checked: boolean | null = null;
