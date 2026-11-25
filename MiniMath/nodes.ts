@@ -8,7 +8,7 @@ export type ParseNodeType =
   | "boxed" | "fcolorbox" | "colorbox" | "sout" | "rule" | "vcenter" | "smash" | "raisebox" | "hbox" | "tag" | "colorbox" | "includegraphics"
   | "macro" | "cr" | "binom" | "overbrace" | "underbrace" | "not" | "cancel"
   | "operatorname" | "textop" | "array" | "matrix" | "cases" | "aligned"
-  | "stack" | "lap" | "reflectbox" | "includegraphics" | "html" | "mathchoice" | "macroparam";
+  | "stack" | "lap" | "reflectbox" | "includegraphics" | "html" | "mathchoice" | "macroparam" | "enclose";
 
 export interface ParseNode {
   type: ParseNodeType;

@@ -480,6 +480,26 @@ export class Parser {
     }
 
     // \not
+    if (name === "cancelto") {
+      const top = this.parseGroupOrAtom();
+      const body = this.parseGroupOrAtom();
+      const t = Array.isArray(top) ? top : [top];
+      const b = Array.isArray(body) ? body : [body];
+      const cancelNode = { type: "cancel", mode: this.mode, body: b } as N.ParseNode;
+      return this.parseSupSub({ type: "supsub", mode: this.mode, base: cancelNode, sup: t } as N.ParseNode);
+    }
+    if (name === "enclose") {
+      let notation = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        notation = inner.map(n => (n as any).text ?? "").join("");
+      }
+      const body = this.parseGroupOrAtom();
+      const b = Array.isArray(body) ? body : [body];
+      return this.parseSupSub({ type: "enclose", mode: this.mode, notation, body: b } as any);
+    }
     if (name === "not") {
       const base = this.parseGroupOrAtom();
       const b = Array.isArray(base) ? base[0]! : base;

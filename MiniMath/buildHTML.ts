@@ -218,6 +218,10 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
       return `<span class="mcancel">${body}</span>`;
     }
+    case "enclose": {
+      const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
+      return `<span class="menclose" style="border:1px solid currentColor;padding:0 0.1em">${body}</span>`;
+    }
     case "operatorname": {
       const body = node.body ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : escapeHtml(node.name ?? "");
       return `<span class="mop">${escapeHtml(node.name ?? "")}${body}</span>`;
