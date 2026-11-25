@@ -648,6 +648,12 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
       }
     }
 
+    // link reference definition (skip, already collected)
+    if (/^\[[^\]]+\]:\s*\S/.test(lines[i]!)) {
+      i++;
+      continue;
+    }
+
     // paragraph (default)
     const paraLines: string[] = [];
     while (i < end && !isBlank(lines[i]!) && !isBlockStart(lines[i]!)) {
