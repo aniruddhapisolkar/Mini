@@ -84,6 +84,11 @@ describe("MiniChart", () => {
     expect((model as any).donutRatio).toBe(0.7);
   });
 
+  it("parses with legend position", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }, { label: "D2", data: [3, 7] }] }, { type: "bar", legendPosition: "bottom" });
+    expect((model as any).legendPosition).toBe("bottom");
+  });
+
 });
 
 describe("MiniTable selection", () => {
