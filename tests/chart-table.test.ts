@@ -114,6 +114,16 @@ describe("MiniChart", () => {
     expect(result.min.height).toBe(80);
   });
 
+  it("measure returns bbox", () => {
+    const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] }, { type: "bar", width: 400, height: 300 });
+    const ctx = { container: { element: {} } } as any;
+    const result = chartModule.measure(model, ctx);
+    expect(result.bbox.x).toBe(0);
+    expect(result.bbox.y).toBe(0);
+    expect(result.bbox.width).toBe(400);
+    expect(result.bbox.height).toBe(300);
+  });
+
   it("parses with axis labels", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar", xAxisLabel: "Category", yAxisLabel: "Value" });
     expect((model as any).xAxisLabel).toBe("Category");
