@@ -84,4 +84,29 @@ describe("Cross-module integration", () => {
     const model = diagram.parse("graph TD; A-->B;");
     expect(model.kind).toBe("diagram");
   });
+
+  it("text module parses code blocks", () => {
+    const text = getModule("text")!;
+    const model = text.parse("```js\nconst x = 1;\n```");
+    expect(model.kind).toBe("text");
+  });
+
+  it("code module parses python", () => {
+    const code = getModule("code")!;
+    const model = code.parse("def foo():\n    return 1", { language: "python" });
+    expect(model.kind).toBe("code");
+  });
+
+  it("chart module parses doughnut", () => {
+    const chart = getModule("chart")!;
+    const model = chart.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "doughnut" });
+    expect((model as any).type).toBe("doughnut");
+  });
+
+  it("table module parses with options", () => {
+    const table = getModule("table")!;
+    const model = table.parse({ columns: [{ id: "x", header: "X" }], rows: [] }, { pageSize: 10, striped: false });
+    expect((model as any).pageSize).toBe(10);
+    expect((model as any).striped).toBe(false);
+  });
 });
