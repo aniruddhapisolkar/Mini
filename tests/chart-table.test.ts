@@ -57,6 +57,22 @@ describe("MiniChart", () => {
     expect(result.intrinsic.height).toBe(400);
   });
 
+  it("measures pie chart dimensions", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "pie", width: 200, height: 200 });
+    const ctx = { container: { element: {} } } as any;
+    const result = chartModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(200);
+    expect(result.intrinsic.height).toBe(200);
+  });
+
+  it("measures radar chart dimensions", () => {
+    const model = chartModule.parse({ labels: ["A", "B", "C"], datasets: [{ label: "D", data: [1, 2, 3] }] }, { type: "radar", width: 300, height: 300 });
+    const ctx = { container: { element: {} } } as any;
+    const result = chartModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(300);
+    expect(result.intrinsic.height).toBe(300);
+  });
+
   it("parses with axis labels", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar", xAxisLabel: "Category", yAxisLabel: "Value" });
     expect((model as any).xAxisLabel).toBe("Category");
