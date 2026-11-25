@@ -12,7 +12,7 @@ import { register } from "../MiniRender/core/registry";
 
 // ---- Chart data model ----
 
-type ChartType = "line" | "bar" | "bar-horizontal" | "area" | "scatter" | "pie" | "doughnut" | "radar" | "bubble" | "mixed";
+type ChartType = "line" | "bar" | "bar-horizontal" | "area" | "scatter" | "pie" | "doughnut" | "radar" | "bubble" | "polarArea" | "mixed";
 
 interface ChartDataset {
   label: string;
@@ -383,6 +383,40 @@ export const chartModule: ModuleDescriptor = {
         polygon.setAttribute("stroke", ds.color ?? resolveColor(di));
         polygon.setAttribute("stroke-width", "2");
         svg.appendChild(polygon);
+      });
+    } else if (m.type === "polarArea") {
+      // Polar area chart
+      const cx = m.width / 2;
+      const cy = m.height / 2;
+      const r = Math.min(plotW, plotH) / 2;
+      const values = m.datasets[0]?.data ?? [];
+      const n = values.length || 1;
+      const angleStep = (Math.PI * 2) / n;
+      const maxVal = maxAbs(values) || 1;
+
+      values.forEach((val, i) => {
+        const startAngle = i * angleStep - Math.PI / 2;
+        const endAngle = startAngle + angleStep;
+        const sliceR = (val / maxVal) * r;
+        const x1 = cx + sliceR * Math.cos(startAngle);
+        const y1 = cy + sliceR * Math.sin(startAngle);
+        const x2 = cx + sliceR * Math.cos(endAngle);
+        const y2 = cy + sliceR * Math.sin(endAngle);
+        const largeArc = angleStep > Math.PI ? 1 : 0;
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const d = [
+          `M ${cx} ${cy}`,
+          `L ${x1} ${y1}`,
+          `A ${sliceR} ${sliceR} 0 ${largeArc} 1 ${x2} ${y2}`,
+          "Z",
+        ].join(" ");
+        path.setAttribute("d", d);
+        path.setAttribute("fill", resolveColor(i));
+        path.setAttribute("stroke", "#fff");
+        path.setAttribute("stroke-width", "1");
+        path.setAttribute("opacity", "0.7");
+        svg.appendChild(path);
       });
     } else if (m.type === "pie" || m.type === "doughnut") {
       // Pie/doughnut chart
