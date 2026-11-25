@@ -56,6 +56,12 @@ describe("MiniChart", () => {
     expect(result.intrinsic.width).toBe(500);
     expect(result.intrinsic.height).toBe(400);
   });
+
+  it("parses with axis labels", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar", xAxisLabel: "Category", yAxisLabel: "Value" });
+    expect((model as any).xAxisLabel).toBe("Category");
+    expect((model as any).yAxisLabel).toBe("Value");
+  });
 });
 
 describe("MiniTable selection", () => {
