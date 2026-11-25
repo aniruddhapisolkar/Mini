@@ -22,6 +22,12 @@ export function renderDocument(doc: TextDocument, opts: RenderOptions = {}): str
   return renderBlocks(doc.children, opts);
 }
 
+export function renderBlocksArray(blocks: BlockNode[], opts: RenderOptions = {}): string[] {
+  const sanitize = opts.sanitize !== false;
+  const typo = opts.typography === true;
+  return blocks.map(b => renderBlock(b, opts, sanitize, typo));
+}
+
 function renderBlock(b: BlockNode, opts: RenderOptions, sanitize: boolean, typo: boolean): string {
   switch (b.type) {
     case "document":

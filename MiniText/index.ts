@@ -7,7 +7,7 @@ import type { RenderHandle, MeasureConstraints, MeasureResult } from "../MiniRen
 import { register } from "../MiniRender/core/registry.js";
 import { parseMarkdown, parseInlines } from "./parser.js";
 import type { TextDocument } from "./types.js";
-import { renderDocument } from "./render.js";
+import { renderDocument, renderBlocksArray } from "./render.js";
 import { sanitizeHtml } from "../MiniRender/text/index.js";
 
 interface TextModel extends SemanticModel {
@@ -36,23 +36,45 @@ export const textModule: ModuleDescriptor = {
     const root: RenderNode = { id: "text-root", kind: "group", children: [] };
     const container = (ctx.container.element as HTMLElement);
 
-    const html = renderDocument(m.document, { sanitize: true, typography: false });
+    const blockHtmls = renderBlocksArray(m.document.children, { sanitize: true, typography: false });
     const wrapper = document.createElement("div");
     wrapper.className = "mini-text";
-    wrapper.innerHTML = html;
+    const blockEls: HTMLElement[] = [];
+    for (const h of blockHtmls) {
+      const el = document.createElement("div");
+      el.className = "mini-text-block";
+      el.innerHTML = h;
+      wrapper.appendChild(el);
+      blockEls.push(el);
+    }
     container.appendChild(wrapper);
-
-    let currentHtml = html;
 
     const handle: RenderHandle = {
       id: root.id,
       update(input) {
-        const newModel = textModule.parse(input, model.metadata);
-        const newHtml = renderDocument((newModel as unknown as TextModel).document, { sanitize: true });
-        // Incremental optimization: skip DOM write if unchanged
-        if (newHtml === currentHtml) return;
-        wrapper.innerHTML = newHtml;
-        currentHtml = newHtml;
+        const newModel = textModule.parse(input, model.metadata) as unknown as TextModel;
+        const newBlockHtmls = renderBlocksArray(newModel.document.children, { sanitize: true });
+        // Incremental: reuse unchanged blocks, replace changed ones
+        const maxLen = Math.max(blockEls.length, newBlockHtmls.length);
+        for (let idx = 0; idx < maxLen; idx++) {
+          const newH = newBlockHtmls[idx];
+          const oldEl = blockEls[idx];
+          if (newH === undefined) {
+            // removed
+            if (oldEl) { oldEl.remove(); blockEls.splice(idx, 1); idx--; }
+            continue;
+          }
+          if (oldEl && oldEl.innerHTML === newH) continue; // unchanged
+          if (oldEl) {
+            oldEl.innerHTML = newH;
+          } else {
+            const el = document.createElement("div");
+            el.className = "mini-text-block";
+            el.innerHTML = newH;
+            wrapper.appendChild(el);
+            blockEls.push(el);
+          }
+        }
       },
       destroy() { wrapper.remove(); },
     };
