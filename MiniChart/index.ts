@@ -84,6 +84,10 @@ export const chartModule: ModuleDescriptor = {
     container.style.width = `${m.width}px`;
     container.style.height = `${m.height}px`;
     container.style.position = "relative";
+    // Dark mode support via CSS variables
+    container.style.setProperty("--mini-chart-bg", "var(--mini-bg, #fff)");
+    container.style.setProperty("--mini-chart-text", "var(--mini-text, #333)");
+    container.style.setProperty("--mini-chart-grid", "var(--mini-grid, #eee)");
 
     // Title
     if (m.title) {
