@@ -746,6 +746,13 @@ export class Parser {
       // render as "( ... )"
       return this.parseSupSub({ type: "genfrac", mode: this.mode, numerator: b, denominator: [], hasBarLine: false, leftDelim: "(", rightDelim: ")" } as N.ParseNode);
     }
+    if (name === "fcolorbox") {
+      let border = "", bg = "";
+      if (this.peek().type === "group_open") { this.next(); const i = this.parseExpression(); this.expect("group_close"); border = i.map(n => (n as any).text ?? "").join(""); }
+      if (this.peek().type === "group_open") { this.next(); const i = this.parseExpression(); this.expect("group_close"); bg = i.map(n => (n as any).text ?? "").join(""); }
+      const body = this.parseGroupOrAtom();
+      return this.parseSupSub({ type: "fcolorbox", mode: this.mode, border, bg, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);

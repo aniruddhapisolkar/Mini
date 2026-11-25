@@ -133,6 +133,10 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
       return `<span class="mboxed" style="border:1px solid currentColor;padding:0 0.25em">${body}</span>`;
     }
+    case "fcolorbox": {
+      const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
+      return `<span class="mfcolorbox" style="border:1px solid ${escapeHtml(node.border)};background:${escapeHtml(node.bg)};padding:0 0.25em">${body}</span>`;
+    }
     case "rule": {
       return `<span class="rule" style="display:inline-block;width:${node.width}em;height:${node.height}em;vertical-align:${node.shift ?? 0}em;background:currentColor"></span>`;
     }
