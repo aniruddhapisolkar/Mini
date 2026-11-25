@@ -358,6 +358,19 @@ describe("MiniTable selection", () => {
     const result = tableModule.measure(model, ctx);
     expect(result.intrinsic.width).toBe(0);
   });
+
+  it("handles missing table input", () => {
+    const model = tableModule.parse(null);
+    expect(model.kind).toBe("table");
+    expect((model as any).columns).toEqual([]);
+    expect((model as any).rows).toEqual([]);
+  });
+
+  it("handles table with no columns", () => {
+    const model = tableModule.parse({ rows: [{ id: "r1", cells: { a: 1 } }] });
+    expect((model as any).columns).toEqual([]);
+    expect((model as any).rows.length).toBe(1);
+  });
 });
 
 describe("MiniTable", () => {
