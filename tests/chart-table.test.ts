@@ -178,6 +178,12 @@ describe("MiniChart", () => {
     expect((model as any).yAxisLabel).toBe("Value");
   });
 
+  it("parses with only xAxisLabel", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar", xAxisLabel: "X" });
+    expect((model as any).xAxisLabel).toBe("X");
+    expect((model as any).yAxisLabel).toBeUndefined();
+  });
+
   it("parses with title", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar", title: "Sales" });
     expect((model as any).title).toBe("Sales");
