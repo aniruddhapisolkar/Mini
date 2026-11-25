@@ -394,6 +394,25 @@ export const chartModule: ModuleDescriptor = {
           svg.appendChild(text);
           labelAngle += angle;
         });
+
+        // Pie percentage labels
+        labelAngle = -Math.PI / 2;
+        values.forEach((val, i) => {
+          const angle = (val / total) * Math.PI * 2;
+          const midAngle = labelAngle + angle / 2;
+          const labelR = r * 0.4;
+          const x = cx + labelR * Math.cos(midAngle);
+          const y = cy + labelR * Math.sin(midAngle);
+          const pctText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          pctText.setAttribute("x", String(x));
+          pctText.setAttribute("y", String(y));
+          pctText.setAttribute("text-anchor", "middle");
+          pctText.setAttribute("font-size", "9");
+          pctText.setAttribute("fill", "#fff");
+          pctText.textContent = `${Math.round((val / total) * 100)}%`;
+          svg.appendChild(pctText);
+          labelAngle += angle;
+        });
       }
     }
 
