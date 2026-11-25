@@ -40,7 +40,7 @@ describe("MiniChart", () => {
   });
 
   it("parses all chart types", () => {
-    const types = ["bar", "line", "area", "scatter", "pie", "doughnut", "radar", "bubble", "mixed"] as const;
+    const types = ["bar", "bar-horizontal", "line", "area", "scatter", "pie", "doughnut", "radar", "bubble", "mixed"] as const;
     for (const t of types) {
       const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [1, 2] }] }, { type: t });
       expect((model as any).type).toBe(t);
