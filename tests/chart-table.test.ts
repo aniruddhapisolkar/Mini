@@ -11,6 +11,16 @@ describe("MiniChart", () => {
     expect((model as any).datasets[0].data).toEqual([10, 20]);
   });
 
+  it("defaults width to 400", () => {
+    const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] }, { type: "bar" });
+    expect((model as any).width).toBe(400);
+  });
+
+  it("defaults height to 300", () => {
+    const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] }, { type: "bar" });
+    expect((model as any).height).toBe(300);
+  });
+
   it("measures chart dimensions", () => {
     const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D1", data: [5] }] }, { type: "bar", width: 300, height: 200 });
     const ctx = { container: { element: {} } } as any;
