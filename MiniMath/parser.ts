@@ -686,6 +686,46 @@ export class Parser {
       }
       return null;
     }
+    if (name === "ce" || name === "cee" || name === "pu") {
+      // Basic mhchem-style: parse group as text, apply subscripts/superscripts
+      let src = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        src = inner.map(n => (n as any).text ?? "").join("");
+      } else if (this.peek().type === "text") {
+        src = this.next().value;
+      }
+      // Render as mathord with subscripts via simple transform: digits after letters -> subscript
+      const nodes: N.ParseNode[] = [];
+      let i = 0;
+      while (i < src.length) {
+        const ch = src[i]!;
+        if (/[A-Za-z]/.test(ch)) {
+          let sym = ch;
+          i++;
+          while (i < src.length && /[A-Za-z]/.test(src[i]!)) { sym += src[i]; i++; }
+          nodes.push({ type: "mathord", mode: this.mode, text: sym } as N.ParseNode);
+        } else if (/[0-9]/.test(ch)) {
+          let num = ch; i++;
+          while (i < src.length && /[0-9]/.test(src[i]!)) { num += src[i]; i++; }
+          nodes.push({ type: "supsub", mode: this.mode, base: undefined, sub: [{ type: "mathord", mode: this.mode, text: num } as N.ParseNode] } as N.ParseNode);
+        } else if (ch === "^") {
+          i++;
+          let charge = "";
+          if (i < src.length && src[i] === "{") { i++; while (i < src.length && src[i] !== "}") { charge += src[i]; i++; } i++; }
+          else { charge = src[i] || ""; i++; }
+          nodes.push({ type: "supsub", mode: this.mode, sup: [{ type: "mathord", mode: this.mode, text: charge } as N.ParseNode] } as N.ParseNode);
+        } else if (ch === "_" || ch === " ") {
+          i++;
+        } else {
+          nodes.push({ type: "mathord", mode: this.mode, text: ch } as N.ParseNode);
+          i++;
+        }
+      }
+      return this.parseSupSub({ type: "group", mode: this.mode, body: nodes } as N.ParseNode);
+    }
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
