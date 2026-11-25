@@ -113,15 +113,21 @@ export const mathModule: ModuleDescriptor = {
   measure(model: SemanticModel, _ctx: RenderContext, constraints?: MeasureConstraints): MeasureResult {
     const m = model as MathModel;
     const latex = m.latex;
-    // Font-metric-aware width estimate: use canvas measureText when available, else char heuristic.
+    // Font-metric-aware width estimate: sum per-glyph canvas widths when available.
     let w = 8;
     try {
       if (typeof document !== "undefined") {
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
         if (ctx) {
-          ctx.font = "16px serif";
-          w = Math.max(8, ctx.measureText(latex.replace(/\\[a-zA-Z]+/g, "x")).width);
+          ctx.font = "16px KaTeX_Main, serif";
+          // Replace commands with representative glyphs, then measure per char
+          const cleaned = latex.replace(/\\[a-zA-Z]+/g, "x");
+          let sum = 0;
+          for (const ch of cleaned) {
+            sum += ctx.measureText(ch).width;
+          }
+          w = Math.max(8, sum);
         } else {
           w = Math.max(8, latex.length * 8);
         }

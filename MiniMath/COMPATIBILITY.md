@@ -11,7 +11,7 @@ Reference: KaTeX v0.19.1
 - Fractions: \frac, \dfrac, \tfrac, \cfrac
 - Square roots: \sqrt, \sqrt[n]
 - Matrices: matrix, pmatrix, bmatrix, vmatrix, Vmatrix, Bmatrix
-- Environments: array, cases, aligned, gathered, align, split, cd
+- Environments: array, cases, aligned, gathered, align, split, cd, equation, gather, multline, flalign, subarray
 - Binomial: \binom, \dbinom, \tbinom
 - Delimiters: \left, \right, \middle, \big..\Bigg
 - Accents: \hat, \check, \tilde, \acute, \grave, \dot, \ddot, \bar, \breve, \vec, \overline, \underline, \overrightarrow, \overleftarrow, \widehat, \widetilde, \overbrace, \underbrace

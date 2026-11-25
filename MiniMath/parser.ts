@@ -777,7 +777,7 @@ export class Parser {
       const rows = this.parseArrayRows(envName);
       return { type: "cases", mode: this.mode, envName, body: rows } as N.ParseNode;
     }
-    if (envName === "aligned" || envName === "gathered" || envName === "align" || envName === "align*" || envName === "eqnarray" || envName === "split" || envName === "flalign" || envName === "multline" || envName === "subarray" || envName === "multline*" || envName === "equation" || envName === "equation*" || envName === "gather" || envName === "gather*") {
+    if (envName === "aligned" || envName === "gathered" || envName === "align" || envName === "align*" || envName === "eqnarray" || envName === "split" || envName === "flalign" || envName === "flalign*" || envName === "multline" || envName === "subarray" || envName === "multline*" || envName === "equation" || envName === "equation*" || envName === "gather" || envName === "gather*") {
       const rows = this.parseArrayRows(envName);
       return { type: "aligned", mode: this.mode, envName, body: rows } as N.ParseNode;
     }
