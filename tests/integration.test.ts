@@ -117,6 +117,18 @@ describe("Cross-module integration", () => {
     expect(chart.supportedBackends).toContain("canvas");
   });
 
+  it("chart module has render and measure capabilities", () => {
+    const chart = getModule("chart")!;
+    expect(chart.capabilities).toContain("render:html");
+    expect(chart.capabilities).toContain("render:svg");
+    expect(chart.capabilities).toContain("measure:intrinsic");
+  });
+
+  it("table module has virtualization capability", () => {
+    const table = getModule("table")!;
+    expect(table.capabilities).toContain("perf:virtualize");
+  });
+
   it("table module supports html and svg backends", () => {
     const table = getModule("table")!;
     expect(table.supportedBackends).toContain("html");
