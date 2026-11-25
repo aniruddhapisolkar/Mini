@@ -192,7 +192,7 @@ Reference for follow-up agents. State as of latest main: 264 tests passing, type
 ## 5. MiniChart (Cortana) — remaining
 
 ### Missing
-- Animations
+- Animations (partial: CSS transitions added)
 - Zooming/panning
 - Real-time data updates
 - Large dataset optimization
@@ -201,16 +201,22 @@ Reference for follow-up agents. State as of latest main: 264 tests passing, type
 - Box plots
 - Histograms
 - Radar (done), bubble (done)
+- Mixed charts (done), stacked bars (done), polarArea (done)
 - Multiple axes/scales (done basic)
 - Logarithmic scales
 - Tooltips (done)
 - Legend positioning (done)
-- Responsive (done)
+- Responsive sizing (done)
+- Dark mode via CSS vars (done)
+- Pie percentage labels (done)
+- Grid lines (done), axis labels (done)
+- Canvas backend (done)
+- Percentage labels (done)
 
 ## 6. MiniTable (Cortana) — remaining
 
 ### Missing
-- Column reordering (drag)
+- Column reordering (drag) (done basic)
 - Column pinning
 - Hierarchical rows
 - Expandable rows (done)
@@ -222,6 +228,11 @@ Reference for follow-up agents. State as of latest main: 264 tests passing, type
 - Data import/export
 - Keyboard navigation
 - Embedded content from other Mini modules
+- Scrollable virtualization + rAF scroll handler (done)
+- Column resize drag (done)
+- Aggregation, footer, highlightFilter (done)
+- Grouping, column visibility/ordering (done)
+- Dark mode via CSS vars (done)
 
 ## 7. MiniRender (shared) — remaining
 
