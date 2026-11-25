@@ -278,6 +278,16 @@ describe("MiniTable selection", () => {
     expect((model as any).pageSize).toBe(25);
   });
 
+  it("handles pageSize of 1", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { pageSize: 1 });
+    expect((model as any).pageSize).toBe(1);
+  });
+
+  it("handles large pageSize", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { pageSize: 1000 });
+    expect((model as any).pageSize).toBe(1000);
+  });
+
   it("accepts custom pageSize", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { pageSize: 50 });
     expect((model as any).pageSize).toBe(50);
