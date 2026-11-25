@@ -227,6 +227,12 @@ export function parseInlines(text: string, opts: Required<ParseOptions> = DEFAUL
       // determine run length
       let runLen = 0;
       while (i + runLen < n && text[i + runLen] === ch) runLen++;
+      // try triple (strong+emphasis) first
+      if (runLen >= 3) {
+        const delim = ch.repeat(3);
+        const res = parseDelimited(text, i, delim, (inner) => ({ type: "strong", children: [ { type: "emphasis", children: parseInlines(inner, opts, refs) } ] }));
+        if (res) { flushBuf(); out.push(res.node); i = res.end; continue; }
+      }
       // try strong (** or __) then emphasis
       if (runLen >= 2) {
         const delim = ch.repeat(2);
