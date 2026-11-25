@@ -188,6 +188,23 @@ describe("MiniTable selection", () => {
     const result = tableModule.measure(model, ctx);
     expect(result.intrinsic.width).toBe(450);
   });
+
+  it("measures with default column width", () => {
+    const model = tableModule.parse({
+      columns: [{ id: "a", header: "A" }, { id: "b", header: "B" }],
+      rows: [],
+    });
+    const ctx = { container: { element: {} } } as any;
+    const result = tableModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(240); // 2 * 120
+  });
+
+  it("handles empty table", () => {
+    const model = tableModule.parse({ columns: [], rows: [] });
+    const ctx = { container: { element: {} } } as any;
+    const result = tableModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(0);
+  });
 });
 
 describe("MiniTable", () => {
