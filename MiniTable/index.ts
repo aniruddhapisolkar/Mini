@@ -117,6 +117,7 @@ export const tableModule: ModuleDescriptor = {
     const root: RenderNode = { id: "table-root", kind: "table", children: [] };
     const container = document.createElement("div");
     container.className = "mini-table";
+    container.style.position = "relative";
     container.style.setProperty("--mini-table-bg", "var(--mini-bg, #fff)");
     container.style.setProperty("--mini-table-text", "var(--mini-text, #333)");
     container.style.setProperty("--mini-table-border", "var(--mini-border, #ccc)");
@@ -237,7 +238,7 @@ export const tableModule: ModuleDescriptor = {
       // Virtualized rendering: only render visible rows
       const totalHeight = sorted.length * m.rowHeight;
       const visibleCount = Math.ceil(m.viewportHeight / m.rowHeight) + 2; // +2 for buffer
-      const scrollTop = 0; // simplified: start from top
+      let scrollTop = 0;
       const startIndex = Math.floor(scrollTop / m.rowHeight);
       const endIndex = Math.min(startIndex + visibleCount, sorted.length);
       const offsetY = startIndex * m.rowHeight;
