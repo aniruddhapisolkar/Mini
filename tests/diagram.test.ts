@@ -55,3 +55,17 @@ describe("MiniDiagram mindmap", () => {
     expect(svg).toContain("<svg");
   });
 });
+
+describe("MiniDiagram pie", () => {
+  it("parses pie", () => {
+    const m = parseDiagram('pie title Pets\n  "Dogs" : 386\n  "Cats" : 85');
+    expect(m.diagramType).toBe("pie");
+    expect(m.pie!.slices.length).toBe(2);
+  });
+  it("renders pie SVG", () => {
+    const m = parseDiagram('pie\n  "A" : 10\n  "B" : 20');
+    const svg = renderSVG(m);
+    expect(svg).toContain("<svg");
+    expect(svg).toContain("<path");
+  });
+});
