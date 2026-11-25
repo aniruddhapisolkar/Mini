@@ -12,7 +12,7 @@ import { renderToHTML } from "../MiniMath/index.js";
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
 interface Subgraph { id: string; title: string; nodes: string[]; }
-interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap" | "pie" | "gantt"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; pie?: { title: string; slices: { label: string; value: number }[]; }; gantt?: { title: string; tasks: { name: string; id: string; start: number; duration: number }[]; }; }
+interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence" | "mindmap" | "pie" | "gantt" | "state"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; pie?: { title: string; slices: { label: string; value: number }[]; }; gantt?: { title: string; tasks: { name: string; id: string; start: number; duration: number }[]; }; }
 
 function parseNodeToken(tok: string): { id: string; label: string; shape: string } {
   tok = tok.trim();
@@ -34,6 +34,17 @@ function parseNodeToken(tok: string): { id: string; label: string; shape: string
 
 export function parseDiagram(source: string): DiagramModel {
   const trimmed = source.trim();
+  if (/^stateDiagram\b/i.test(trimmed)) {
+    // strip keyword and parse as flowchart, marking [*] as start/end states
+    const body = trimmed.replace(/^stateDiagram(?:-v2)?\s*\n?/i, "");
+    const m = parseDiagram("graph TD\n" + body);
+    m.diagramType = "state";
+    // mark [*] nodes
+    for (const n of m.nodes) {
+      if (n.label === "[*]" || n.id === "[*]") { n.shape = "circle"; n.label = ""; n.w = 20; n.h = 20; }
+    }
+    return m;
+  }
   if (/^gantt\b/i.test(trimmed)) {
     return parseGanttDiagram(trimmed);
   }
@@ -234,11 +245,15 @@ export function layout(model: DiagramModel) {
     pred.get(e.to)?.push(e.from);
   }
   const rank = new Map<string, number>();
+  const visiting = new Set<string>();
   function computeRank(id: string): number {
     if (rank.has(id)) return rank.get(id)!;
+    if (visiting.has(id)) return 0; // cycle
+    visiting.add(id);
     const ps = pred.get(id) ?? [];
     let r = 0;
     for (const p of ps) r = Math.max(r, computeRank(p) + 1);
+    visiting.delete(id);
     rank.set(id, r);
     return r;
   }

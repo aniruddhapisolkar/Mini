@@ -83,3 +83,16 @@ describe("MiniDiagram gantt", () => {
     expect(svg).toContain("<rect");
   });
 });
+
+describe("MiniDiagram state", () => {
+  it("parses state diagram", () => {
+    const m = parseDiagram("stateDiagram-v2\n[*] --> Still\nStill --> Moving");
+    expect(m.diagramType).toBe("state");
+    expect(m.edges.length).toBe(2);
+  });
+  it("renders state SVG", () => {
+    const m = parseDiagram("stateDiagram-v2\n[*] --> A\nA --> [*]");
+    const svg = renderSVG(m);
+    expect(svg).toContain("<svg");
+  });
+});
