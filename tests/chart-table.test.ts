@@ -135,6 +135,17 @@ describe("MiniTable selection", () => {
     expect((model as any).virtualized).toBe(false);
   });
 
+  it("parses with showFooter option", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { showFooter: true, footerCells: { name: "Total" } });
+    expect((model as any).showFooter).toBe(true);
+    expect((model as any).footerCells.name).toBe("Total");
+  });
+
+  it("defaults showFooter to false", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).showFooter).toBe(false);
+  });
+
   it("measures with multiple columns", () => {
     const model = tableModule.parse({
       columns: [{ id: "a", header: "A", width: 100 }, { id: "b", header: "B", width: 200 }, { id: "c", header: "C", width: 150 }],
