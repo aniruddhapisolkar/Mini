@@ -81,6 +81,14 @@ describe("MiniChart", () => {
     expect(result.intrinsic.height).toBe(300);
   });
 
+  it("measure returns min dimensions", () => {
+    const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] }, { type: "bar" });
+    const ctx = { container: { element: {} } } as any;
+    const result = chartModule.measure(model, ctx);
+    expect(result.min.width).toBe(100);
+    expect(result.min.height).toBe(80);
+  });
+
   it("parses with axis labels", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar", xAxisLabel: "Category", yAxisLabel: "Value" });
     expect((model as any).xAxisLabel).toBe("Category");
