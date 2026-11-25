@@ -204,6 +204,21 @@ describe("MiniChart", () => {
     expect((model as any).legendPosition).toBe("bottom");
   });
 
+  it("parses with top legend position", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }] }, { type: "bar", legendPosition: "top" });
+    expect((model as any).legendPosition).toBe("top");
+  });
+
+  it("parses with left legend position", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }] }, { type: "bar", legendPosition: "left" });
+    expect((model as any).legendPosition).toBe("left");
+  });
+
+  it("parses with right legend position", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }] }, { type: "bar", legendPosition: "right" });
+    expect((model as any).legendPosition).toBe("right");
+  });
+
   it("defaults legendPosition to undefined", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar" });
     expect((model as any).legendPosition).toBeUndefined();
