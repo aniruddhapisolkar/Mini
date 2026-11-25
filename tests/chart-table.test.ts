@@ -11,6 +11,11 @@ describe("MiniChart", () => {
     expect((model as any).datasets[0].data).toEqual([10, 20]);
   });
 
+  it("defaults chart type to bar", () => {
+    const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] });
+    expect((model as any).type).toBe("bar");
+  });
+
   it("handles empty labels", () => {
     const model = chartModule.parse({ labels: [], datasets: [{ label: "D", data: [] }] }, { type: "bar" });
     expect((model as any).labels).toEqual([]);
