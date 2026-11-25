@@ -252,4 +252,20 @@ describe("Cross-module integration", () => {
     const uniqueIds = new Set(ids);
     expect(uniqueIds.size).toBe(modules.length);
   });
+
+  it("chart and table modules are independently usable", () => {
+    const chart = getModule("chart")!;
+    const table = getModule("table")!;
+
+    const chartModel = chart.parse({ labels: ["Q1", "Q2"], datasets: [{ label: "Revenue", data: [100, 200] }] });
+    const tableModel = table.parse({
+      columns: [{ id: "quarter", header: "Quarter" }, { id: "revenue", header: "Revenue" }],
+      rows: [{ id: "r1", cells: { quarter: "Q1", revenue: 100 } }, { id: "r2", cells: { quarter: "Q2", revenue: 200 } }],
+    });
+
+    expect(chartModel.kind).toBe("chart");
+    expect(tableModel.kind).toBe("table");
+    expect((chartModel as any).labels).toEqual(["Q1", "Q2"]);
+    expect((tableModel as any).rows.length).toBe(2);
+  });
 });
