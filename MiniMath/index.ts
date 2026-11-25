@@ -225,6 +225,21 @@ export function renderMathInElement(root: HTMLElement, options: MathOptions = {}
   walk(root);
 }
 
+export function createMathStream(container: HTMLElement, options: MathOptions = {}): { push: (chunk: string) => void; flush: () => void; destroy: () => void } {
+  let buffer = "";
+  const wrapper = document.createElement("span");
+  wrapper.className = "mini-math-stream";
+  container.appendChild(wrapper);
+  const render = () => {
+    wrapper.innerHTML = renderToHTML(buffer, options);
+  };
+  return {
+    push(chunk: string) { buffer += chunk; render(); },
+    flush() { render(); },
+    destroy() { wrapper.remove(); },
+  };
+}
+
 export default mathModule;
 
 function escapeHtml(s: string): string { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
