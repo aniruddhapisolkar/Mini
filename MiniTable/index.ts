@@ -48,6 +48,8 @@ interface TableModel extends SemanticModel {
   highlightFilter: boolean;
   columnVisibility: Record<string, boolean>;
   columnOrder: string[];
+  expandable: boolean;
+  expandedRows: Set<string>;
 }
 
 // ---- Helpers ----
@@ -83,7 +85,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean; columnVisibility?: Record<string, boolean>; columnOrder?: string[] };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string>; aggregation?: Record<string, "sum" | "avg" | "count" | "min" | "max">; highlightFilter?: boolean; columnVisibility?: Record<string, boolean>; columnOrder?: string[]; expandable?: boolean };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -114,6 +116,8 @@ export const tableModule: ModuleDescriptor = {
       highlightFilter: opts.highlightFilter ?? false,
       columnVisibility: opts.columnVisibility ?? {},
       columnOrder: opts.columnOrder ?? [],
+      expandable: opts.expandable ?? false,
+      expandedRows: new Set(),
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -313,6 +317,24 @@ export const tableModule: ModuleDescriptor = {
       pageRows.forEach((row, ri) => {
         const tr = document.createElement("tr");
         if (m.striped && ri % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
+        if (m.expandable) {
+          const td = document.createElement("td");
+          td.style.padding = "8px";
+          td.style.width = "30px";
+          const btn = document.createElement("button");
+          btn.textContent = m.expandedRows.has(row.id) ? "−" : "+";
+          btn.style.border = "none";
+          btn.style.background = "none";
+          btn.style.cursor = "pointer";
+          btn.addEventListener("click", () => {
+            if (m.expandedRows.has(row.id)) m.expandedRows.delete(row.id);
+            else m.expandedRows.add(row.id);
+            container.innerHTML = "";
+            tableModule.render(m, ctx);
+          });
+          td.appendChild(btn);
+          tr.appendChild(td);
+        }
         if (m.selectable) {
           const td = document.createElement("td");
           td.style.padding = "8px";
@@ -347,6 +369,16 @@ export const tableModule: ModuleDescriptor = {
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
+        if (m.expandable && m.expandedRows.has(row.id)) {
+          const expRow = document.createElement("tr");
+          const expTd = document.createElement("td");
+          expTd.colSpan = visibleCols.length + (m.selectable ? 1 : 0) + (m.expandable ? 1 : 0);
+          expTd.style.padding = "8px";
+          expTd.style.backgroundColor = "#f5f5f5";
+          expTd.textContent = `Expanded: ${row.id}`;
+          expRow.appendChild(expTd);
+          tbody.appendChild(expRow);
+        }
       });
     }
     table.appendChild(tbody);
