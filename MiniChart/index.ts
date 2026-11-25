@@ -113,6 +113,30 @@ export const chartModule: ModuleDescriptor = {
       const groupW = plotW / barCount;
       const barW = groupW * 0.6;
 
+      // Grid lines
+      const gridCount = 5;
+      for (let g = 0; g <= gridCount; g++) {
+        const y = padding.top + (plotH / gridCount) * g;
+        const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        gridLine.setAttribute("x1", String(padding.left));
+        gridLine.setAttribute("y1", String(y));
+        gridLine.setAttribute("x2", String(padding.left + plotW));
+        gridLine.setAttribute("y2", String(y));
+        gridLine.setAttribute("stroke", "#eee");
+        gridLine.setAttribute("stroke-width", "1");
+        svg.appendChild(gridLine);
+
+        // Y-axis tick label
+        const tickVal = maxVal * (1 - g / gridCount);
+        const tickText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        tickText.setAttribute("x", String(padding.left - 5));
+        tickText.setAttribute("y", String(y + 4));
+        tickText.setAttribute("text-anchor", "end");
+        tickText.setAttribute("font-size", "9");
+        tickText.textContent = tickVal.toFixed(0);
+        svg.appendChild(tickText);
+      }
+
       // Axes
       const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
       xAxis.setAttribute("x1", String(padding.left));
@@ -177,6 +201,59 @@ export const chartModule: ModuleDescriptor = {
           svg.appendChild(polyline);
         });
       }
+    } else if (m.type === "scatter") {
+      // Scatter chart
+      m.datasets.forEach((ds, di) => {
+        ds.data.forEach((val, i) => {
+          const x = padding.left + (i / (ds.data.length - 1 || 1)) * plotW;
+          const y = padding.top + plotH - (val / maxVal) * plotH;
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", String(x));
+          circle.setAttribute("cy", String(y));
+          circle.setAttribute("r", "4");
+          circle.setAttribute("fill", ds.color ?? resolveColor(di));
+          svg.appendChild(circle);
+        });
+      });
+    } else if (m.type === "radar") {
+      // Radar chart
+      const cx = m.width / 2;
+      const cy = m.height / 2;
+      const r = Math.min(plotW, plotH) / 2;
+      const n = m.labels.length || 1;
+      // Draw axes
+      m.labels.forEach((label, i) => {
+        const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+        const x = cx + r * Math.cos(angle);
+        const y = cy + r * Math.sin(angle);
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", String(cx));
+        line.setAttribute("y1", String(cy));
+        line.setAttribute("x2", String(x));
+        line.setAttribute("y2", String(y));
+        line.setAttribute("stroke", "#ccc");
+        svg.appendChild(line);
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("x", String(x + 5));
+        text.setAttribute("y", String(y));
+        text.setAttribute("font-size", "10");
+        text.textContent = label;
+        svg.appendChild(text);
+      });
+      // Draw data polygon
+      m.datasets.forEach((ds, di) => {
+        const points = ds.data.map((val, i) => {
+          const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+          const rr = (val / maxVal) * r;
+          return `${cx + rr * Math.cos(angle)},${cy + rr * Math.sin(angle)}`;
+        }).join(" ");
+        const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+        polygon.setAttribute("points", points);
+        polygon.setAttribute("fill", (ds.color ?? resolveColor(di)) + "33");
+        polygon.setAttribute("stroke", ds.color ?? resolveColor(di));
+        polygon.setAttribute("stroke-width", "2");
+        svg.appendChild(polygon);
+      });
     } else if (m.type === "pie" || m.type === "doughnut") {
       // Pie/doughnut chart
       const cx = m.width / 2;

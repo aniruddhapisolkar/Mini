@@ -12,7 +12,7 @@ import { renderToHTML } from "../MiniMath/index.js";
 interface DiagramNode { id: string; label: string; shape: string; x: number; y: number; w: number; h: number; }
 interface DiagramEdge { from: string; to: string; label?: string; style: "solid" | "dashed" | "thick" | "dotted"; arrow: boolean; }
 interface Subgraph { id: string; title: string; nodes: string[]; }
-interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence"; direction: "TD"|"LR"|"BT"|"RL"; layout: "layered" | "force" | "tree"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; }
+interface DiagramModel extends SemanticModel { kind: "diagram"; diagramType: "flowchart" | "sequence"; direction: "TD"|"LR"|"BT"|"RL"; nodes: DiagramNode[]; edges: DiagramEdge[]; subgraphs: Subgraph[]; sequence?: { participants: string[]; messages: { from: string; to: string; text: string; style: "solid" | "dashed"; }[]; }; }
 
 function parseNodeToken(tok: string): { id: string; label: string; shape: string } {
   tok = tok.trim();
@@ -39,7 +39,6 @@ export function parseDiagram(source: string): DiagramModel {
   }
   const lines = source.split(/\n/).map(l => l.trim()).filter(Boolean);
   let direction: DiagramModel["direction"] = "TD";
-  let layout: DiagramModel["layout"] = "layered";
   const nodes = new Map<string, DiagramNode>();
   const edges: DiagramEdge[] = [];
   const subgraphs: Subgraph[] = [];
@@ -60,8 +59,6 @@ export function parseDiagram(source: string): DiagramModel {
       if ((direction as string) === "TB") direction = "TD";
       continue;
     }
-    const lm = line.match(/^layout\s+(layered|force|tree)\b/i);
-    if (lm) { layout = lm[1]!.toLowerCase() as DiagramModel["layout"]; continue; }
     if (/^subgraph\b/i.test(line)) {
       const title = line.replace(/^subgraph\s*/i, "").trim() || `sg${subgraphs.length}`;
       currentSub = { id: title.replace(/\s+/g, "_"), title, nodes: [] };
@@ -107,7 +104,7 @@ export function parseDiagram(source: string): DiagramModel {
     n.w = Math.max(60, n.label.length * 8 + 24);
     n.h = 32;
   }
-  return { kind: "diagram", version: 1, diagramType: "flowchart", direction, layout, nodes: nodeList, edges, subgraphs } as DiagramModel;
+  return { kind: "diagram", version: 1, diagramType: "flowchart", direction, nodes: nodeList, edges, subgraphs } as DiagramModel;
 }
 
 export function parseSequenceDiagram(source: string): DiagramModel {
@@ -135,102 +132,10 @@ export function parseSequenceDiagram(source: string): DiagramModel {
   if (participants.length === 0 && messages.length > 0) {
     // derive from messages
   }
-  return { kind: "diagram", version: 1, diagramType: "sequence", direction: "TD", layout: "layered", nodes: [], edges: [], subgraphs: [], sequence: { participants, messages } } as DiagramModel;
-}
-
-function forceLayout(model: DiagramModel) {
-  const nodes = model.nodes;
-  const byId = new Map(nodes.map(n => [n.id, n]));
-  const w = 400, h = 300;
-  // init positions
-  for (let i = 0; i < nodes.length; i++) {
-    const a = (2 * Math.PI * i) / Math.max(1, nodes.length);
-    nodes[i]!.x = w/2 + Math.cos(a) * 100;
-    nodes[i]!.y = h/2 + Math.sin(a) * 100;
-  }
-  const iters = 50;
-  const area = w * h;
-  const k = Math.sqrt(area / Math.max(1, nodes.length));
-  for (let t = 0; t < iters; t++) {
-    const temp = (1 - t / iters) * 10;
-    const disp = new Map(nodes.map(n => [n.id, { x: 0, y: 0 }]));
-    // repulsive
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i+1; j < nodes.length; j++) {
-        const v = nodes[i]!, u = nodes[j]!;
-        let dx = v.x - u.x, dy = v.y - u.y;
-        const d = Math.max(0.01, Math.hypot(dx, dy));
-        const f = (k*k)/d;
-        const fx = (dx/d)*f, fy = (dy/d)*f;
-        disp.get(v.id)!.x += fx; disp.get(v.id)!.y += fy;
-        disp.get(u.id)!.x -= fx; disp.get(u.id)!.y -= fy;
-      }
-    }
-    // attractive along edges
-    for (const e of model.edges) {
-      const v = byId.get(e.from)!, u = byId.get(e.to)!;
-      if (!v || !u) continue;
-      let dx = v.x - u.x, dy = v.y - u.y;
-      const d = Math.max(0.01, Math.hypot(dx, dy));
-      const f = (d*d)/k;
-      const fx = (dx/d)*f, fy = (dy/d)*f;
-      disp.get(v.id)!.x -= fx; disp.get(v.id)!.y -= fy;
-      disp.get(u.id)!.x += fx; disp.get(u.id)!.y += fy;
-    }
-    // apply with temperature
-    for (const n of nodes) {
-      const d = disp.get(n.id)!;
-      const dd = Math.max(0.01, Math.hypot(d.x, d.y));
-      const move = Math.min(dd, temp);
-      n.x += (d.x/dd)*move;
-      n.y += (d.y/dd)*move;
-      n.x = Math.max(20, Math.min(w-20-n.w, n.x));
-      n.y = Math.max(20, Math.min(h-20-n.h, n.y));
-    }
-  }
-}
-
-function treeLayout(model: DiagramModel) {
-  const nodes = model.nodes;
-  const byId = new Map(nodes.map(n => [n.id, n]));
-  const children = new Map<string, string[]>();
-  const parent = new Map<string, string>();
-  for (const n of nodes) children.set(n.id, []);
-  for (const e of model.edges) {
-    children.get(e.from)?.push(e.to);
-    parent.set(e.to, e.from);
-  }
-  const roots = nodes.filter(n => !parent.has(n.id)).map(n => n.id);
-  if (roots.length === 0 && nodes.length) roots.push(nodes[0]!.id);
-  let xCounter = 0;
-  const depth = new Map<string, number>();
-  function dfs(id: string, d: number) {
-    depth.set(id, d);
-    const ch = children.get(id) ?? [];
-    for (const c of ch) dfs(c, d+1);
-    if (ch.length === 0) {
-      byId.get(id)!.x = xCounter * 80 + 40;
-      xCounter++;
-    }
-  }
-  for (const r of roots) dfs(r, 0);
-  // set y by depth, x for internal nodes = average of children
-  const maxDepth = Math.max(...Array.from(depth.values()), 0);
-  function setXY(id: string) {
-    const ch = children.get(id) ?? [];
-    for (const c of ch) setXY(c);
-    if (ch.length > 0) {
-      const xs = ch.map(c => byId.get(c)!.x);
-      byId.get(id)!.x = xs.reduce((a,b)=>a+b,0)/xs.length;
-    }
-    byId.get(id)!.y = (depth.get(id) ?? 0) * 80 + 40;
-  }
-  for (const r of roots) setXY(r);
+  return { kind: "diagram", version: 1, diagramType: "sequence", direction: "TD", nodes: [], edges: [], subgraphs: [], sequence: { participants, messages } } as DiagramModel;
 }
 
 export function layout(model: DiagramModel) {
-  if (model.layout === "force") return forceLayout(model);
-  if (model.layout === "tree") return treeLayout(model);
   const nodes = model.nodes;
   const byId = new Map(nodes.map(n => [n.id, n]));
   const dir = model.direction;

@@ -23,6 +23,59 @@ describe("MiniChart", () => {
     const model = chartModule.parse({ labels: ["X", "Y"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "pie" });
     expect((model as any).type).toBe("pie");
   });
+
+  it("parses scatter chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B", "C"], datasets: [{ label: "D", data: [1, 5, 3] }] }, { type: "scatter" });
+    expect((model as any).type).toBe("scatter");
+  });
+
+  it("parses radar chart", () => {
+    const model = chartModule.parse({ labels: ["Speed", "Power", "Range"], datasets: [{ label: "D", data: [80, 60, 90] }] }, { type: "radar" });
+    expect((model as any).type).toBe("radar");
+  });
+
+  it("parses bubble chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [10, 20] }] }, { type: "bubble" });
+    expect((model as any).type).toBe("bubble");
+  });
+
+  it("parses area chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "area" });
+    expect((model as any).type).toBe("area");
+  });
+
+  it("parses line chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "line" });
+    expect((model as any).type).toBe("line");
+  });
+
+  it("measures with custom dimensions", () => {
+    const model = chartModule.parse({ labels: ["A"], datasets: [{ label: "D", data: [5] }] }, { type: "bar", width: 500, height: 400 });
+    const ctx = { container: { element: {} } } as any;
+    const result = chartModule.measure(model, ctx);
+    expect(result.intrinsic.width).toBe(500);
+    expect(result.intrinsic.height).toBe(400);
+  });
+});
+
+describe("MiniTable selection", () => {
+  it("parses with selectable option", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [{ id: "r1", cells: { name: "Alice" } }] }, { selectable: true });
+    expect((model as any).selectable).toBe(true);
+    expect((model as any).selectedRows.size).toBe(0);
+  });
+
+  it("parses with resizable option", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { resizable: true });
+    expect((model as any).resizable).toBe(true);
+  });
+
+  it("parses with virtualized option", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { virtualized: true, rowHeight: 24, viewportHeight: 200 });
+    expect((model as any).virtualized).toBe(true);
+    expect((model as any).rowHeight).toBe(24);
+    expect((model as any).viewportHeight).toBe(200);
+  });
 });
 
 describe("MiniTable", () => {

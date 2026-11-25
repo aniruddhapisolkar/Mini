@@ -39,6 +39,9 @@ interface TableModel extends SemanticModel {
   virtualized: boolean;
   rowHeight: number;
   viewportHeight: number;
+  selectable: boolean;
+  selectedRows: Set<string>;
+  resizable: boolean;
 }
 
 // ---- Helpers ----
@@ -74,7 +77,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -96,6 +99,9 @@ export const tableModule: ModuleDescriptor = {
       virtualized: opts.virtualized ?? false,
       rowHeight: opts.rowHeight ?? 32,
       viewportHeight: opts.viewportHeight ?? 400,
+      selectable: opts.selectable ?? false,
+      selectedRows: new Set(),
+      resizable: opts.resizable ?? false,
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -122,6 +128,28 @@ export const tableModule: ModuleDescriptor = {
     // Header
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
+
+    // Select-all checkbox
+    if (m.selectable) {
+      const th = document.createElement("th");
+      th.style.padding = "8px";
+      th.style.width = "30px";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.addEventListener("change", () => {
+        if (cb.checked) {
+          sorted.forEach(r => m.selectedRows.add(r.id));
+        } else {
+          m.selectedRows.clear();
+        }
+        // Re-render
+        container.innerHTML = "";
+        tableModule.render(m, ctx);
+      });
+      th.appendChild(cb);
+      headerRow.appendChild(th);
+    }
+
     m.columns.forEach(col => {
       const th = document.createElement("th");
       th.textContent = col.header;
@@ -142,6 +170,39 @@ export const tableModule: ModuleDescriptor = {
           container.innerHTML = "";
           const newResult = tableModule.render(m, ctx);
         });
+      }
+      // Resize handle
+      if (m.resizable) {
+        const handle = document.createElement("div");
+        handle.style.position = "absolute";
+        handle.style.right = "0";
+        handle.style.top = "0";
+        handle.style.width = "4px";
+        handle.style.height = "100%";
+        handle.style.cursor = "col-resize";
+        handle.style.userSelect = "none";
+        handle.style.background = "transparent";
+        th.style.position = "relative";
+        let startX = 0;
+        let startWidth = 0;
+        handle.addEventListener("mousedown", (e) => {
+          startX = (e as MouseEvent).clientX;
+          startWidth = th.offsetWidth;
+          const onMove = (ev: MouseEvent) => {
+            const newWidth = startWidth + (ev.clientX - startX);
+            if (newWidth > 30) {
+              th.style.width = `${newWidth}px`;
+              col.width = newWidth;
+            }
+          };
+          const onUp = () => {
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+          };
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup", onUp);
+        });
+        th.appendChild(handle);
       }
       headerRow.appendChild(th);
     });
@@ -177,6 +238,20 @@ export const tableModule: ModuleDescriptor = {
         const tr = document.createElement("tr");
         tr.style.height = `${m.rowHeight}px`;
         if (m.striped && i % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
+        if (m.selectable) {
+          const td = document.createElement("td");
+          td.style.padding = "8px";
+          td.style.width = "30px";
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = m.selectedRows.has(row.id);
+          cb.addEventListener("change", () => {
+            if (cb.checked) m.selectedRows.add(row.id);
+            else m.selectedRows.delete(row.id);
+          });
+          td.appendChild(cb);
+          tr.appendChild(td);
+        }
         m.columns.forEach(col => {
           const td = document.createElement("td");
           td.textContent = String(row.cells[col.id] ?? "");
@@ -204,6 +279,20 @@ export const tableModule: ModuleDescriptor = {
       pageRows.forEach((row, ri) => {
         const tr = document.createElement("tr");
         if (m.striped && ri % 2 === 1) tr.style.backgroundColor = "#f9f9f9";
+        if (m.selectable) {
+          const td = document.createElement("td");
+          td.style.padding = "8px";
+          td.style.width = "30px";
+          const cb = document.createElement("input");
+          cb.type = "checkbox";
+          cb.checked = m.selectedRows.has(row.id);
+          cb.addEventListener("change", () => {
+            if (cb.checked) m.selectedRows.add(row.id);
+            else m.selectedRows.delete(row.id);
+          });
+          td.appendChild(cb);
+          tr.appendChild(td);
+        }
         m.columns.forEach(col => {
           const td = document.createElement("td");
           td.textContent = String(row.cells[col.id] ?? "");
