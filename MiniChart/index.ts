@@ -280,6 +280,23 @@ export const chartModule: ModuleDescriptor = {
           svg.appendChild(polyline);
         });
       }
+    } else if (m.type === "bubble") {
+      // Bubble chart
+      m.datasets.forEach((ds, di) => {
+        ds.data.forEach((val, i) => {
+          const bubbleSize = Math.abs(val) * 2 + 4;
+          const x = padding.left + (i / (ds.data.length - 1 || 1)) * plotW;
+          const y = padding.top + plotH - (val / maxVal) * plotH;
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.setAttribute("cx", String(x));
+          circle.setAttribute("cy", String(y));
+          circle.setAttribute("r", String(bubbleSize));
+          circle.setAttribute("fill", (ds.color ?? resolveColor(di)) + "66");
+          circle.setAttribute("stroke", ds.color ?? resolveColor(di));
+          circle.setAttribute("stroke-width", "1");
+          svg.appendChild(circle);
+        });
+      });
     } else if (m.type === "scatter") {
       // Scatter chart
       m.datasets.forEach((ds, di) => {
