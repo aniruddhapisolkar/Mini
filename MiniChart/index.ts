@@ -330,6 +330,29 @@ export const chartModule: ModuleDescriptor = {
 
         startAngle = endAngle;
       });
+
+      // Pie labels
+      if (m.labels.length > 0) {
+        let labelAngle = -Math.PI / 2;
+        const values = m.datasets[0]?.data ?? [];
+        const total = values.reduce((a, b) => a + b, 0) || 1;
+        values.forEach((val, i) => {
+          const angle = (val / total) * Math.PI * 2;
+          const midAngle = labelAngle + angle / 2;
+          const labelR = r * 0.7;
+          const x = cx + labelR * Math.cos(midAngle);
+          const y = cy + labelR * Math.sin(midAngle);
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", String(x));
+          text.setAttribute("y", String(y));
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("font-size", "10");
+          text.setAttribute("fill", "#fff");
+          text.textContent = m.labels[i] ?? "";
+          svg.appendChild(text);
+          labelAngle += angle;
+        });
+      }
     }
 
     // Legend for multi-dataset charts
