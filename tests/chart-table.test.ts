@@ -52,6 +52,12 @@ describe("MiniChart", () => {
     expect((model as any).type).toBe("pie");
   });
 
+  it("parses pie chart with 3 slices", () => {
+    const model = chartModule.parse({ labels: ["A", "B", "C"], datasets: [{ label: "D", data: [30, 40, 30] }] }, { type: "pie" });
+    expect((model as any).labels.length).toBe(3);
+    expect((model as any).datasets[0].data.length).toBe(3);
+  });
+
   it("parses doughnut chart", () => {
     const model = chartModule.parse({ labels: ["X", "Y"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "doughnut" });
     expect((model as any).type).toBe("doughnut");
