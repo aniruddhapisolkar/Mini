@@ -24,6 +24,21 @@ describe("MiniChart", () => {
     expect((model as any).type).toBe("pie");
   });
 
+  it("parses doughnut chart", () => {
+    const model = chartModule.parse({ labels: ["X", "Y"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "doughnut" });
+    expect((model as any).type).toBe("doughnut");
+  });
+
+  it("parses area chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "area" });
+    expect((model as any).type).toBe("area");
+  });
+
+  it("parses scatter chart", () => {
+    const model = chartModule.parse({ labels: ["A", "B", "C"], datasets: [{ label: "D", data: [1, 5, 3] }] }, { type: "scatter" });
+    expect((model as any).type).toBe("scatter");
+  });
+
   it("parses scatter chart", () => {
     const model = chartModule.parse({ labels: ["A", "B", "C"], datasets: [{ label: "D", data: [1, 5, 3] }] }, { type: "scatter" });
     expect((model as any).type).toBe("scatter");
