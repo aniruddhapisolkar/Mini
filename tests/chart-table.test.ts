@@ -437,6 +437,26 @@ describe("MiniTable selection", () => {
     expect((model as any).aggregation.val).toBe("sum");
   });
 
+  it("parses with avg aggregation", () => {
+    const model = tableModule.parse({ columns: [{ id: "val", header: "Val" }], rows: [] }, { aggregation: { val: "avg" } });
+    expect((model as any).aggregation.val).toBe("avg");
+  });
+
+  it("parses with count aggregation", () => {
+    const model = tableModule.parse({ columns: [{ id: "val", header: "Val" }], rows: [] }, { aggregation: { val: "count" } });
+    expect((model as any).aggregation.val).toBe("count");
+  });
+
+  it("parses with min aggregation", () => {
+    const model = tableModule.parse({ columns: [{ id: "val", header: "Val" }], rows: [] }, { aggregation: { val: "min" } });
+    expect((model as any).aggregation.val).toBe("min");
+  });
+
+  it("parses with max aggregation", () => {
+    const model = tableModule.parse({ columns: [{ id: "val", header: "Val" }], rows: [] }, { aggregation: { val: "max" } });
+    expect((model as any).aggregation.val).toBe("max");
+  });
+
   it("defaults selectable to false for footer", () => {
     const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { showFooter: true });
     expect((model as any).selectable).toBe(false);
