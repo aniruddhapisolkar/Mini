@@ -42,6 +42,8 @@ interface TableModel extends SemanticModel {
   selectable: boolean;
   selectedRows: Set<string>;
   resizable: boolean;
+  showFooter: boolean;
+  footerCells: Record<string, string>;
 }
 
 // ---- Helpers ----
@@ -77,7 +79,7 @@ export const tableModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "measure:intrinsic", "compose:embed", "perf:virtualize", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg"],
   parse(input: unknown, options?: unknown): TableModel {
-    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean };
+    const opts = (options ?? {}) as { pageSize?: number; striped?: boolean; bordered?: boolean; virtualized?: boolean; rowHeight?: number; viewportHeight?: number; selectable?: boolean; resizable?: boolean; showFooter?: boolean; footerCells?: Record<string, string> };
     const raw = (input ?? {}) as { columns?: TableColumn[]; rows?: TableRow[] };
     const columns = raw.columns ?? [];
     const rows = (raw.rows ?? []).map((r, i) => ({
@@ -102,6 +104,8 @@ export const tableModule: ModuleDescriptor = {
       selectable: opts.selectable ?? false,
       selectedRows: new Set(),
       resizable: opts.resizable ?? false,
+      showFooter: opts.showFooter ?? false,
+      footerCells: opts.footerCells ?? {},
     };
   },
   render(model: SemanticModel, ctx: RenderContext): RenderResult {
@@ -304,6 +308,27 @@ export const tableModule: ModuleDescriptor = {
       });
     }
     table.appendChild(tbody);
+
+    // Footer
+    if (m.showFooter) {
+      const tfoot = document.createElement("tfoot");
+      const footerRow = document.createElement("tr");
+      if (m.selectable) {
+        const td = document.createElement("td");
+        footerRow.appendChild(td);
+      }
+      m.columns.forEach(col => {
+        const td = document.createElement("td");
+        td.textContent = String(m.footerCells[col.id] ?? "");
+        td.style.padding = "8px";
+        td.style.fontWeight = "bold";
+        td.style.borderTop = "2px solid #ccc";
+        footerRow.appendChild(td);
+      });
+      tfoot.appendChild(footerRow);
+      table.appendChild(tfoot);
+    }
+
     container.appendChild(table);
 
     // Pagination
