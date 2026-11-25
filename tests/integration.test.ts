@@ -109,4 +109,25 @@ describe("Cross-module integration", () => {
     expect((model as any).pageSize).toBe(10);
     expect((model as any).striped).toBe(false);
   });
+
+  it("chart module supports all backends", () => {
+    const chart = getModule("chart")!;
+    expect(chart.supportedBackends).toContain("html");
+    expect(chart.supportedBackends).toContain("svg");
+    expect(chart.supportedBackends).toContain("canvas");
+  });
+
+  it("table module supports html and svg backends", () => {
+    const table = getModule("table")!;
+    expect(table.supportedBackends).toContain("html");
+    expect(table.supportedBackends).toContain("svg");
+  });
+
+  it("modules have a11y capabilities", () => {
+    const modules = ["chart", "table", "math", "diagram", "text", "code"];
+    for (const id of modules) {
+      const mod = getModule(id)!;
+      expect(mod.capabilities).toContain("a11y:aria");
+    }
+  });
 });
