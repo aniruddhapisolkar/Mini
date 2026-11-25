@@ -117,6 +117,16 @@ describe("Cross-module integration", () => {
     expect(chart.supportedBackends).toContain("canvas");
   });
 
+  it("chart module has version", () => {
+    const chart = getModule("chart")!;
+    expect(chart.version).toBeDefined();
+  });
+
+  it("table module has version", () => {
+    const table = getModule("table")!;
+    expect(table.version).toBeDefined();
+  });
+
   it("chart module has render and measure capabilities", () => {
     const chart = getModule("chart")!;
     expect(chart.capabilities).toContain("render:html");
