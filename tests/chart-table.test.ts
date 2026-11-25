@@ -146,6 +146,11 @@ describe("MiniTable selection", () => {
     expect((model as any).showFooter).toBe(false);
   });
 
+  it("defaults selectable to false for footer", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] }, { showFooter: true });
+    expect((model as any).selectable).toBe(false);
+  });
+
   it("measures with multiple columns", () => {
     const model = tableModule.parse({
       columns: [{ id: "a", header: "A", width: 100 }, { id: "b", header: "B", width: 200 }, { id: "c", header: "C", width: 150 }],
