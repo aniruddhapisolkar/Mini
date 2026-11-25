@@ -61,7 +61,7 @@ export function renderToHTML(latex: string, options: MathOptions = {}): string {
 export function renderToMathML(latex: string, options: MathOptions = {}): string {
   const { expr } = parseLatex(latex, options);
   if (!expr) return "";
-  return buildMathML(expr, options.displayMode ?? false);
+  return buildMathML(expr, options.displayMode ?? false, latex);
 }
 
 export const mathModule: ModuleDescriptor = {
@@ -85,12 +85,13 @@ export const mathModule: ModuleDescriptor = {
     wrapper.className = "mini-math";
     wrapper.setAttribute("role", "math");
     wrapper.setAttribute("aria-label", m.latex);
+    wrapper.setAttribute("data-latex", m.latex);
     if (m.error) {
       wrapper.style.color = opts.errorColor ?? "#cc0000";
       wrapper.textContent = m.latex;
     } else {
       const html = buildHTML(m.parsed!, { ...opts, displayMode: opts.displayMode ?? false });
-      const mathml = buildMathML(m.parsed!, opts.displayMode ?? false);
+      const mathml = buildMathML(m.parsed!, opts.displayMode ?? false, m.latex);
       wrapper.innerHTML = `<span class="katex-mathml" style="position:absolute;clip:rect(1px,1px,1px,1px);">${mathml}</span><span class="katex-html" aria-hidden="true">${extractInner(html)}</span>`;
     }
     container.appendChild(wrapper);
@@ -103,7 +104,7 @@ export const mathModule: ModuleDescriptor = {
         if (expr) m.parsed = expr; else delete m.parsed;
         if (error) m.error = error; else delete m.error;
         if (error) { wrapper.style.color = opts.errorColor ?? "#cc0000"; wrapper.textContent = newLatex; }
-        else { wrapper.innerHTML = `<span class="katex-mathml" style="position:absolute;clip:rect(1px,1px,1px,1px);">${buildMathML(expr!, opts.displayMode ?? false)}</span><span class="katex-html" aria-hidden="true">${extractInner(buildHTML(expr!, { ...opts, displayMode: opts.displayMode ?? false }))}</span>`; }
+        else { wrapper.innerHTML = `<span class="katex-mathml" style="position:absolute;clip:rect(1px,1px,1px,1px);">${buildMathML(expr!, opts.displayMode ?? false, newLatex)}</span><span class="katex-html" aria-hidden="true">${extractInner(buildHTML(expr!, { ...opts, displayMode: opts.displayMode ?? false }))}</span>`; }
       },
       destroy() { wrapper.remove(); },
     };

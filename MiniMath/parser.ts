@@ -592,12 +592,22 @@ export class Parser {
       const amt = this.parseDimension();
       let height: number | undefined;
       let depth: number | undefined;
-      if (this.peek().type === "group_open") {
-        // optional [height][depth] before main group? KaTeX: \raisebox{amount}[height][depth]{content}
-        // We only support amount here; consume optional bracket groups as no-ops
+      // optional [height]
+      if (this.peek().type === "text" && this.peek().value === "[") {
+        this.next();
+        const inner = this.parseExpression(new Set(["]"]));
+        if (this.peek().type === "text" && this.peek().value === "]") this.next();
+        height = parseFloat(inner.map(n => (n as any).text ?? "").join("")) || undefined;
+      }
+      // optional [depth]
+      if (this.peek().type === "text" && this.peek().value === "[") {
+        this.next();
+        const inner = this.parseExpression(new Set(["]"]));
+        if (this.peek().type === "text" && this.peek().value === "]") this.next();
+        depth = parseFloat(inner.map(n => (n as any).text ?? "").join("")) || undefined;
       }
       const body = this.parseGroupOrAtom();
-      return this.parseSupSub({ type: "raisebox", mode: this.mode, amount: amt, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+      return this.parseSupSub({ type: "raisebox", mode: this.mode, amount: amt, height, depth, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
     if (name === "mathchoice") {
       const d = this.parseGroupOrAtom();

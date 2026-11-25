@@ -216,7 +216,15 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const body = node.body ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : escapeHtml(node.name ?? "");
       return `<span class="mop">${escapeHtml(node.name ?? "")}${body}</span>`;
     }
-    case "vcenter": case "smash": case "raisebox": case "hbox": case "reflectbox": case "lap": {
+    case "raisebox": {
+      const body = Array.isArray(node.body) ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : renderNode(node.body, opts, display);
+      const amt = node.amount ?? 0;
+      const h = node.height;
+      const d = node.depth;
+      const style = `vertical-align:${amt}em${h !== undefined ? `;height:${h}em` : ""}${d !== undefined ? `;depth:${d}em` : ""}`;
+      return `<span class="mraisebox" style="${style}">${body}</span>`;
+    }
+    case "vcenter": case "smash": case "hbox": case "reflectbox": case "lap": {
       const body = Array.isArray(node.body) ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : renderNode(node.body, opts, display);
       return `<span class="${node.type}">${body}</span>`;
     }

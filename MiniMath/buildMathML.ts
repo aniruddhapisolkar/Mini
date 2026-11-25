@@ -2,10 +2,10 @@
 
 import type { ParseNode, Expression } from "./nodes.js";
 
-export function buildMathML(expr: Expression, displayMode = false): string {
+export function buildMathML(expr: Expression, displayMode = false, latex?: string): string {
   const inner = expr.map(n => mmlNode(n)).join("");
-  const tag = displayMode ? "math" : "math";
-  return `<${tag} xmlns="http://www.w3.org/1998/Math/MathML" display="${displayMode ? "block" : "inline"}">${inner}</${tag}>`;
+  const tag = "math";
+  return `<${tag} xmlns="http://www.w3.org/1998/Math/MathML" display="${displayMode ? "block" : "inline"}"><semantics>${inner}<annotation encoding="application/x-tex">${escapeXml(latex ?? "")}</annotation></semantics></${tag}>`;
 }
 
 function mmlNode(node: any): string {

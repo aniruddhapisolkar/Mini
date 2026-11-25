@@ -45,10 +45,10 @@ Reference: KaTeX v0.19.1
 ## Not yet implemented
 - \def, \newcommand macros (token-level expansion)
 - mhchem chemistry (basic: \ce with subscripts/superscripts)
-- copy-tex
+- copy-tex (via data-latex attribute + MathML annotation)
 - Full TeX font metrics (currently em-based/canvas approximations)
 - Full stretchy delimiter sizing
-- MathML parallel output improvements
+- MathML parallel output with <semantics> + tex annotation (copy-tex support)
 
 ## Notes
 - Zero runtime dependencies.
