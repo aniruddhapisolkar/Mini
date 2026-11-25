@@ -42,12 +42,17 @@ export const textModule: ModuleDescriptor = {
     wrapper.innerHTML = html;
     container.appendChild(wrapper);
 
+    let currentHtml = html;
+
     const handle: RenderHandle = {
       id: root.id,
       update(input) {
         const newModel = textModule.parse(input, model.metadata);
-        // re-render in place
-        wrapper.innerHTML = renderDocument((newModel as TextModel).document, { sanitize: true });
+        const newHtml = renderDocument((newModel as unknown as TextModel).document, { sanitize: true });
+        // Incremental optimization: skip DOM write if unchanged
+        if (newHtml === currentHtml) return;
+        wrapper.innerHTML = newHtml;
+        currentHtml = newHtml;
       },
       destroy() { wrapper.remove(); },
     };
