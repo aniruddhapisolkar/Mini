@@ -110,6 +110,31 @@ describe("MiniTable selection", () => {
     expect((model as any).pageSize).toBe(50);
   });
 
+  it("defaults striped to true", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).striped).toBe(true);
+  });
+
+  it("defaults bordered to true", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).bordered).toBe(true);
+  });
+
+  it("defaults selectable to false", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).selectable).toBe(false);
+  });
+
+  it("defaults resizable to false", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).resizable).toBe(false);
+  });
+
+  it("defaults virtualized to false", () => {
+    const model = tableModule.parse({ columns: [{ id: "name", header: "Name" }], rows: [] });
+    expect((model as any).virtualized).toBe(false);
+  });
+
   it("measures with multiple columns", () => {
     const model = tableModule.parse({
       columns: [{ id: "a", header: "A", width: 100 }, { id: "b", header: "B", width: 200 }, { id: "c", header: "C", width: 150 }],
