@@ -164,6 +164,11 @@ describe("MiniChart", () => {
     expect((model as any).title).toBe("Sales");
   });
 
+  it("parses without title", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar" });
+    expect((model as any).title).toBeUndefined();
+  });
+
   it("counts datasets", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }, { label: "D2", data: [3, 7] }, { label: "D3", data: [1, 2] }] }, { type: "bar" });
     expect((model as any).datasets.length).toBe(3);
