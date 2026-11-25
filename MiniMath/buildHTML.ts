@@ -253,6 +253,9 @@ function accentChar(label: string): string {
     overrightarrow: "→", overleftarrow: "←", overleftrightarrow: "↔",
     overparen: "⏜", underparen: "⏝",
     underleftrightarrow: "↔", overleftharpoon: "↼", overrightharpoon: "⇀",
+    overgroup: "⏞", undergroup: "⏟", Overrightarrow: "⇒",
+    overbracket: "⌈", underbracket: "⌊", overlinesegment: "‾", underlinesegment: "_",
+    widecheck: "ˇ", utilde: "˜", mathring: "˚", dddot: "...", ddddot: "....",
   };
   return map[label] ?? "̂";
 }

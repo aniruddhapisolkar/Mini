@@ -208,7 +208,11 @@ export class Parser {
     }
     if (name === "overrightarrow" || name === "overleftarrow" || name === "overleftrightarrow" ||
         name === "widehat" || name === "widetilde" || name === "overparen" || name === "underparen" ||
-        name === "underleftrightarrow" || name === "overleftharpoon" || name === "overrightharpoon") {
+        name === "underleftrightarrow" || name === "overleftharpoon" || name === "overrightharpoon" ||
+        name === "overgroup" || name === "undergroup" || name === "Overrightarrow" ||
+        name === "overbracket" || name === "underbracket" || name === "overlinesegment" ||
+        name === "underlinesegment" || name === "widecheck" || name === "utilde" ||
+        name === "mathring" || name === "dddot" || name === "ddddot") {
       const base = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "accent", mode: this.mode, label: name, base } as N.ParseNode);
     }
