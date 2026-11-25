@@ -100,6 +100,11 @@ describe("MiniChart", () => {
     expect((model as any).title).toBe("Sales");
   });
 
+  it("parses with multiple datasets", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D1", data: [5, 10] }, { label: "D2", data: [3, 7] }] }, { type: "bar" });
+    expect((model as any).datasets.length).toBe(2);
+  });
+
   it("parses doughnut with custom ratio", () => {
     const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [30, 70] }] }, { type: "doughnut", donutRatio: 0.7 });
     expect((model as any).donutRatio).toBe(0.7);
