@@ -520,6 +520,13 @@ export class Parser {
     // raisebox
     if (name === "raisebox") {
       const amt = this.parseDimension();
+      for (let i = 0; i < 2; i++) {
+        if (this.peek().type === "text" && this.peek().value === "[") {
+          this.next();
+          this.parseExpression(new Set(["]"]));
+          if (this.peek().type === "text" && this.peek().value === "]") this.next();
+        }
+      }
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "raisebox", mode: this.mode, amount: amt, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
@@ -826,6 +833,21 @@ export class Parser {
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "colorbox", mode: this.mode, color, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
+    // \\ce (mhchem-ish basic)
+    if (name === "ce" || name === "cee") {
+      let raw = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        raw = inner.map(n => (n as any).text ?? "").join("");
+      }
+      const transformed = raw.replace(/([A-Za-z)\]])(\d+)/g, "$1_{$2}");
+      const p = new Parser(transformed || raw, this.mode, { ...this.options, macros: undefined });
+      const nodes = p.parse();
+      return this.parseSupSub({ type: "styling", mode: this.mode, style: "mathrm", body: nodes } as N.ParseNode);
+    }
+
     // user-defined macro invocation
     if (this.macros[name]) {
       const macro = this.macros[name]!;
