@@ -78,6 +78,7 @@ export function createScope(id: string, variables: Record<string, string> = {}, 
 
 export { htmlBackend } from "./backends/html";
 export { svgBackend } from "./backends/svg";
+export { canvasBackend, createCanvasBackend } from "./backends/canvas";
 export { createRenderHandle } from "./core/lifecycle";
 export type { BackendId } from "./core/types";
 export type { Backend } from "./core/interfaces";
