@@ -156,9 +156,7 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
       return `<a href="${escapeHtml(node.href)}" class="mhref">${body}</a>`;
     }
-    case "includegraphics": {
-      return `<img src="${escapeHtml(node.src ?? "")}" class="mincludegraphics" alt="" style="max-width:100%"/>`;
-    }
+    // duplicate removed
     case "colorbox": {
       const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
       return `<span class="mcolorbox" style="background-color:${escapeHtml(node.color)};padding:0 0.25em">${body}</span>`;
@@ -224,7 +222,7 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const style = `vertical-align:${amt}em${h !== undefined ? `;height:${h}em` : ""}${d !== undefined ? `;depth:${d}em` : ""}`;
       return `<span class="mraisebox" style="${style}">${body}</span>`;
     }
-    case "vcenter": case "smash": case "hbox": case "reflectbox": case "lap": {
+    case "vcenter": case "smash": case "hbox": {
       const body = Array.isArray(node.body) ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : renderNode(node.body, opts, display);
       return `<span class="${node.type}">${body}</span>`;
     }
