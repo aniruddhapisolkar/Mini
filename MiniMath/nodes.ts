@@ -4,7 +4,7 @@ export type ParseNodeType =
   | "ord" | "text" | "mathord" | "operator" | "bin" | "rel" | "open" | "close"
   | "punct" | "inner" | "genfrac" | "sqrt" | "supsub" | "accent" | "overline"
   | "underline" | "phantom" | "sizing" | "styling" | "spacing" | "kern"
-  | "environment" | "delim" | "left" | "right" | "middle" | "color" | "href"
+  | "environment" | "delim" | "left" | "right" | "middle" | "leftright" | "color" | "href"
   | "boxed" | "rule" | "vcenter" | "smash" | "raisebox" | "hbox" | "tag"
   | "macro" | "cr" | "binom" | "overbrace" | "underbrace" | "not" | "cancel"
   | "operatorname" | "textop" | "array" | "matrix" | "cases" | "aligned"
@@ -54,6 +54,7 @@ export interface EnvironmentNode extends ParseNode {
 export interface LeftNode extends ParseNode { type: "left"; delim: string; }
 export interface RightNode extends ParseNode { type: "right"; delim: string; }
 export interface MiddleNode extends ParseNode { type: "middle"; delim: string; }
+export interface LeftrightNode extends ParseNode { type: "leftright"; left: string; right: string; body: ParseNode[]; size: number; }
 export interface ColorNode extends ParseNode { type: "color"; color: string; body: ParseNode[]; }
 export interface HrefNode extends ParseNode { type: "href"; href: string; body: ParseNode[]; }
 export interface BoxedNode extends ParseNode { type: "boxed"; body: ParseNode[]; }
