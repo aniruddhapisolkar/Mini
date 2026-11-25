@@ -653,7 +653,7 @@ function parseBlockList(lines: string[], opts: Required<ParseOptions>, refs: Map
     }
 
     // html block (simplified): starts with block-level tag
-    if (/^ {0,3}<\/?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:\s|>|\/|$)/i.test(lines[i]!)) {
+    if (/^ {0,3}<!--/.test(lines[i]!) || /^ {0,3}<\?/.test(lines[i]!) || /^ {0,3}<!\[CDATA\[/.test(lines[i]!) || /^ {0,3}<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s|>|\/)/i.test(lines[i]!)) {
       const htmlLines: string[] = [];
       while (i < end && !isBlank(lines[i]!)) {
         htmlLines.push(lines[i]!);
@@ -724,7 +724,7 @@ function isBlockStart(line: string): boolean {
   if (/^(`{3,}|~{3,})/.test(line)) return true;
   if (/^ {0,3}>/.test(line)) return true;
   if (/^ {0,3}([-+*]|\d{1,9}[.)])\s/.test(line)) return true;
-  if (/^ {0,3}</.test(line) && /^ {0,3}<\/?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|meta|nav|noframes|ol|optgroup|option|p|param|section|source|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:\s|>|\/|$)/i.test(line)) return true;
+  if (/^ {0,3}<!--/.test(line) || /^ {0,3}<\?/.test(line) || /^ {0,3}<!\[CDATA\[/.test(line) || /^ {0,3}<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s|>|\/)/i.test(line)) return true;
   return false;
 }
 
