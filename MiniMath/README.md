@@ -3,7 +3,7 @@
 Alice's module. KaTeX-parity mathematical typesetting plus an original mathematical illustration DSL.
 
 ## Status
-Phase 4. See `COMPATIBILITY.md` for the KaTeX command matrix.
+Phase 5. See `COMPATIBILITY.md` for the KaTeX command matrix.
 
 ## Usage
 ```ts

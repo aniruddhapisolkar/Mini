@@ -356,7 +356,7 @@ export class Parser {
     }
 
     // \color
-    if (name === "color") {
+    if (name === "color" || name === "textcolor") {
       // \color{red}{...} or \color red
       let color = "";
       if (this.peek().type === "group_open") {
@@ -374,6 +374,35 @@ export class Parser {
     }
 
     // \boxed
+    if (name === "includegraphics") {
+      if (this.peek().type === "text" && this.peek().value === "[") {
+        this.next();
+        this.parseExpression(new Set(["]"]));
+        if (this.peek().type === "text" && this.peek().value === "]") this.next();
+      }
+      let src = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        src = inner.map(n => (n as any).text ?? "").join("");
+      }
+      return this.parseSupSub({ type: "includegraphics", mode: this.mode, src } as N.ParseNode);
+    }
+    if (name === "colorbox" || name === "fcolorbox") {
+      let color = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        color = inner.map(n => (n as any).text ?? "").join("");
+      }
+      const body = this.parseGroupOrAtom();
+      if (name === "colorbox") {
+        return this.parseSupSub({ type: "colorbox", mode: this.mode, color, body: Array.isArray(body) ? body : [body] } as any);
+      }
+      return this.parseSupSub({ type: "boxed", mode: this.mode, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
+    }
     if (name === "boxed" || name === "fbox" || name === "framebox") {
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "boxed", mode: this.mode, body: Array.isArray(body) ? body : [body] } as N.ParseNode);

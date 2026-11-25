@@ -43,21 +43,12 @@ Reference: KaTeX v0.19.1
 - Layouts: layered, force, tree
 
 ## Not yet implemented
-- \begin{equation}, \begin{multline}, \begin{flalign}
-- \mathchoice, \mathpalette
-- \href, \htmlClass, \htmlId, \htmlStyle, \htmlData
-- \includegraphics
-- \raisebox full, \reflectbox
-- \lap (llap/rlap/clap) rendering
-- Stretchy delimiters sizing (currently text size)
-- MathML parallel output improvements
-- Auto-render extension
+- \def, \newcommand macros (token-level expansion)
 - mhchem chemistry
 - copy-tex
-- Macros: \def, \newcommand (partial)
-- Incremental/streaming rendering
-- Font metrics (TeX font metrics) — currently em-based approximations
-- Full delimiter sizing
+- Full TeX font metrics (currently em-based/canvas approximations)
+- Full stretchy delimiter sizing
+- MathML parallel output improvements
 
 ## Notes
 - Zero runtime dependencies.
