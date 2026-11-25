@@ -27,6 +27,8 @@ interface ChartModel extends SemanticModel {
   labels: string[];
   datasets: ChartDataset[];
   title?: string;
+  xAxisLabel?: string;
+  yAxisLabel?: string;
   width: number;
   height: number;
 }
@@ -51,7 +53,7 @@ export const chartModule: ModuleDescriptor = {
   capabilities: ["render:html", "render:svg", "render:canvas", "measure:intrinsic", "compose:embed", "perf:stream", "perf:incremental", "a11y:aria", "a11y:keyboard", "a11y:screenreader"],
   supportedBackends: ["html", "svg", "canvas"],
   parse(input: unknown, options?: unknown): ChartModel {
-    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string };
+    const opts = (options ?? {}) as { type?: ChartType; width?: number; height?: number; title?: string; xAxisLabel?: string; yAxisLabel?: string };
     const raw = (input ?? {}) as { labels?: string[]; datasets?: ChartDataset[] };
     const type = opts.type ?? "bar";
     const labels = raw.labels ?? [];
@@ -68,6 +70,8 @@ export const chartModule: ModuleDescriptor = {
       labels,
       datasets,
       ...(opts.title !== undefined ? { title: opts.title } : {}),
+      ...(opts.xAxisLabel !== undefined ? { xAxisLabel: opts.xAxisLabel } : {}),
+      ...(opts.yAxisLabel !== undefined ? { yAxisLabel: opts.yAxisLabel } : {}),
       width: opts.width ?? 400,
       height: opts.height ?? 300,
     };
@@ -153,6 +157,29 @@ export const chartModule: ModuleDescriptor = {
       yAxis.setAttribute("y2", String(padding.top + plotH));
       yAxis.setAttribute("stroke", "#333");
       svg.appendChild(yAxis);
+
+      // X-axis label
+      if (m.xAxisLabel) {
+        const xLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        xLabel.setAttribute("x", String(padding.left + plotW / 2));
+        xLabel.setAttribute("y", String(m.height - 5));
+        xLabel.setAttribute("text-anchor", "middle");
+        xLabel.setAttribute("font-size", "11");
+        xLabel.textContent = m.xAxisLabel;
+        svg.appendChild(xLabel);
+      }
+
+      // Y-axis label
+      if (m.yAxisLabel) {
+        const yLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        yLabel.setAttribute("x", String(12));
+        yLabel.setAttribute("y", String(padding.top + plotH / 2));
+        yLabel.setAttribute("text-anchor", "middle");
+        yLabel.setAttribute("font-size", "11");
+        yLabel.setAttribute("transform", `rotate(-90, 12, ${padding.top + plotH / 2})`);
+        yLabel.textContent = m.yAxisLabel;
+        svg.appendChild(yLabel);
+      }
 
       // Labels
       m.labels.forEach((label, i) => {
