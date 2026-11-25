@@ -770,14 +770,17 @@ export class Parser {
       const rows = this.parseArrayRows(envName);
       return { type: "array", mode: this.mode, envName, body: rows, colAlign: colAlign.split("") } as N.ParseNode;
     }
-    if (envName === "matrix" || envName === "pmatrix" || envName === "bmatrix" || envName === "vmatrix" || envName === "Vmatrix" || envName === "Bmatrix") {
+    const baseEnv = envName.replace(/\*$/, "");
+    if (baseEnv === "matrix" || baseEnv === "pmatrix" || baseEnv === "bmatrix" || baseEnv === "vmatrix" || baseEnv === "Vmatrix" || baseEnv === "Bmatrix" || baseEnv === "smallmatrix") {
+      const envNameNorm = baseEnv;
       const rows = this.parseArrayRows(envName);
       const delimMap: Record<string, [string | null, string | null]> = {
         matrix: [null, null], pmatrix: ["(", ")"], bmatrix: ["[", "]"],
         vmatrix: ["|", "|"], Vmatrix: ["‖", "‖"], Bmatrix: ["{", "}"],
+        smallmatrix: [null, null],
       };
       const [l, r] = delimMap[envName] ?? [null, null];
-      return { type: "matrix", mode: this.mode, envName, body: rows, leftDelim: l, rightDelim: r } as N.ParseNode;
+      return { type: "matrix", mode: this.mode, envName: envNameNorm, body: rows, leftDelim: l, rightDelim: r } as N.ParseNode;
     }
     if (envName === "cases" || envName === "dcases" || envName === "rcases") {
       const rows = this.parseArrayRows(envName);
