@@ -15,12 +15,22 @@ export class Parser {
   private i: number = 0;
   private mode: "math" | "text";
   private options: { macros?: Record<string, string>; maxExpand?: number; throwOnError?: boolean };
+  private macros: Record<string, { params: number; body: N.Expression }> = {};
   private expanded: number = 0;
 
   constructor(input: string, mode: "math" | "text" = "math", options: any = {}) {
     this.tokens = new Lexer(input).tokenize();
     this.mode = mode;
     this.options = options ?? {};
+    // seed macros from options
+    if (this.options.macros) {
+      for (const [name, body] of Object.entries(this.options.macros)) {
+        const bs = String.fromCharCode(92);
+        const key = name.startsWith(bs) ? name.slice(1) : name;
+        const p = new Parser(body, this.mode, { ...this.options, macros: undefined });
+        try { this.macros[key] = { params: 0, body: p.parse() }; } catch { /* ignore */ }
+      }
+    }
   }
 
   parse(): N.Expression {
@@ -70,6 +80,11 @@ export class Parser {
       // apply sup/sub if present
       return this.parseSupSub({ type: "group", mode: this.mode, body: inner } as any);
     }
+    if (t.type === "text" && t.value === "#" && this.peek(1)?.type === "text" && /[1-9]/.test(this.peek(1)!.value)) {
+      this.next(); // #
+      const idxTok = this.next();
+      return { type: "macroparam", mode: this.mode, index: idxTok.value } as N.ParseNode;
+    }
     if (t.type === "text") {
       const ch = t.value;
       this.next();
@@ -104,14 +119,57 @@ export class Parser {
     const t = this.next(); // command token
     const name = t.value;
 
-    // macro expansion
-    if (this.options.macros && this.options.macros[name]) {
-      if (this.expanded++ > (this.options.maxExpand ?? 1000)) throw new ParseError("Max expansion exceeded");
-      const expanded = this.options.macros[name]!;
-      // naive: re-parse by pushing? Instead, parse expanded string recursively
-      const p = new Parser(expanded, this.mode, this.options);
-      const nodes = p.parse();
-      return this.parseSupSub({ type: "macro", mode: this.mode, body: nodes } as any);
+    // macro expansion (options)
+    if (this.options.macros) {
+      const bs = String.fromCharCode(92);
+      const macroBody = this.options.macros[name] || this.options.macros[bs + name];
+      if (macroBody) {
+        if (this.expanded++ > (this.options.maxExpand ?? 1000)) throw new ParseError("Max expansion exceeded");
+        const expanded = String(macroBody);
+        const p = new Parser(expanded, this.mode, { ...this.options, macros: undefined });
+        const nodes = p.parse();
+        return this.parseSupSub({ type: "macro", mode: this.mode, body: nodes } as any);
+      }
+    }
+
+    // macro definitions: \\def, \\newcommand, ...
+    if (name === "def" || name === "newcommand" || name === "renewcommand" || name === "providecommand") {
+      let macroName = "";
+      if (this.peek().type === "group_open") {
+        this.next();
+        const inner = this.parseExpression();
+        this.expect("group_close");
+        macroName = inner.map(n => (n as any).text ?? "").join("").replace(/^\\/, "");
+      } else if (this.peek().type === "command") {
+        macroName = this.next().value;
+      }
+      // parameter spec
+      let params = 0;
+      while (this.peek().type === "text" && this.peek().value === "#") {
+        this.next();
+        const d = this.next();
+        params = Math.max(params, parseInt(d.value, 10) || 0);
+      }
+      if (this.peek().type === "text" && this.peek().value === "[") {
+        this.next();
+        const numStr = this.peek().type === "text" ? this.next().value : "";
+        params = parseInt(numStr, 10) || 0;
+        if (this.peek().type === "text" && this.peek().value === "]") this.next();
+      }
+      let body: N.Expression = [];
+      if (this.peek().type === "group_open") {
+        this.next();
+        body = this.parseExpression();
+        this.expect("group_close");
+      }
+      if (macroName) {
+        if (name === "providecommand" && this.macros[macroName]) {
+          // keep existing
+        } else {
+          this.macros[macroName] = { params, body };
+        }
+      }
+      return null;
     }
 
     // begin/end handled separately
@@ -768,6 +826,18 @@ export class Parser {
       const body = this.parseGroupOrAtom();
       return this.parseSupSub({ type: "colorbox", mode: this.mode, color, body: Array.isArray(body) ? body : [body] } as N.ParseNode);
     }
+    // user-defined macro invocation
+    if (this.macros[name]) {
+      const macro = this.macros[name]!;
+      const args: N.Expression[] = [];
+      for (let i = 0; i < macro.params; i++) {
+        const arg = this.parseGroupOrAtom();
+        args.push(Array.isArray(arg) ? arg : [arg]);
+      }
+      const expanded = this.expandMacro(macro.body, args);
+      return this.parseSupSub({ type: "group", mode: this.mode, body: expanded } as N.ParseNode);
+    }
+
     // default: unknown command -> render as text (or error)
     if (this.options.throwOnError) throw new ParseError("Unknown command: \\" + name, t.loc);
     return this.parseSupSub({ type: "mathord", mode: this.mode, text: "\\" + name } as N.ParseNode);
@@ -939,6 +1009,36 @@ export class Parser {
     }
     this.next();
     return t.value;
+  }
+
+  private expandMacro(body: N.Expression, args: N.Expression[]): N.Expression {
+    const expandExpr = (expr: N.Expression): N.Expression => {
+      const out: N.Expression = [];
+      for (const n of expr) {
+        if ((n as any)?.type === "macroparam") {
+          const idx = (parseInt(String((n as any).index), 10) || 1) - 1;
+          const arg = args[idx] ?? [];
+          for (const a of arg) out.push(this.expandNode(a, args));
+        } else {
+          out.push(this.expandNode(n, args));
+        }
+      }
+      return out;
+    };
+    return expandExpr(body);
+  }
+
+  private expandNode(n: any, args: N.Expression[]): any {
+    if (Array.isArray(n)) return this.expandMacro(n, args);
+    if (!n || typeof n !== "object") return n;
+    const out: any = {};
+    for (const k of Object.keys(n)) {
+      const v = n[k];
+      if (Array.isArray(v)) out[k] = this.expandMacro(v, args);
+      else if (v && typeof v === "object") out[k] = this.expandNode(v, args);
+      else out[k] = v;
+    }
+    return out;
   }
 
   private parseDimension(): number {

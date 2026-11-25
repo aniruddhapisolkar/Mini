@@ -168,11 +168,7 @@ function renderNode(node: any, opts: BuildOptions, display: boolean): string {
       const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
       return `<a href="${escapeHtml(node.href)}" class="mhref">${body}</a>`;
     }
-    // duplicate removed
-    case "colorbox": {
-      const body = (node.body as Expression).map(n => renderNode(n, opts, display)).join("");
-      return `<span class="mcolorbox" style="background-color:${escapeHtml(node.color)};padding:0 0.25em">${body}</span>`;
-    }
+    // colorbox handled above
     case "html": {
       const body = Array.isArray(node.body) ? (node.body as Expression).map(n => renderNode(n, opts, display)).join("") : "";
       const meta = node.meta || {};
