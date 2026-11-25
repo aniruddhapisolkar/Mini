@@ -130,6 +130,11 @@ describe("MiniChart", () => {
     expect((model as any).stacked).toBe(true);
   });
 
+  it("defaults stacked to undefined", () => {
+    const model = chartModule.parse({ labels: ["A", "B"], datasets: [{ label: "D", data: [5, 10] }] }, { type: "bar" });
+    expect((model as any).stacked).toBeUndefined();
+  });
+
 });
 
 describe("MiniTable selection", () => {
